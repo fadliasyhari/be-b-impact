@@ -7,6 +7,7 @@ import (
 
 	"be-b-impact.com/csr/delivery/api"
 	"be-b-impact.com/csr/delivery/api/middleware"
+	"be-b-impact.com/csr/delivery/api/response"
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/usecase"
@@ -143,7 +144,8 @@ func (co *ContentController) listHandler(c *gin.Context) {
 	}
 	var contentInterface []interface{}
 	for _, co := range content {
-		contentInterface = append(contentInterface, co)
+		res := response.MapContentToResponse(&co)
+		contentInterface = append(contentInterface, res)
 	}
 	co.NewSuccessPagedResponse(c, "OK", contentInterface, paging)
 }
@@ -156,7 +158,9 @@ func (co *ContentController) getHandler(c *gin.Context) {
 		return
 	}
 
-	co.NewSuccessSingleResponse(c, "OK", content)
+	res := response.MapContentToResponse(content)
+
+	co.NewSuccessSingleResponse(c, "OK", res)
 }
 
 func (co *ContentController) searchHandler(c *gin.Context) {

@@ -110,7 +110,7 @@ func (ca *categoryRepository) Paging(requestQueryParam dto.RequestQueryParams) (
 		return nil, dto.Paging{}, err
 	}
 	var totalRows int64
-	err = ca.db.Model(model.Category{}).Count(&totalRows).Error
+	err = query.Model(model.Category{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}

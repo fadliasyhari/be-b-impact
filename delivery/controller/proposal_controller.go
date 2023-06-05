@@ -8,6 +8,7 @@ import (
 
 	"be-b-impact.com/csr/delivery/api"
 	"be-b-impact.com/csr/delivery/api/middleware"
+	"be-b-impact.com/csr/delivery/api/response"
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/usecase"
@@ -231,7 +232,8 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 	}
 	var proposalInterface []interface{}
 	for _, pr := range proposal {
-		proposalInterface = append(proposalInterface, pr)
+		res := response.MapProposalToResponse(&pr)
+		proposalInterface = append(proposalInterface, res)
 	}
 	pr.NewSuccessPagedResponse(c, "OK", proposalInterface, paging)
 }
@@ -243,8 +245,8 @@ func (pr *ProposalController) getHandler(c *gin.Context) {
 		pr.NewFailedResponse(c, http.StatusNotFound, err.Error())
 		return
 	}
-
-	pr.NewSuccessSingleResponse(c, "OK", proposal)
+	res := response.MapProposalToResponse(proposal)
+	pr.NewSuccessSingleResponse(c, "OK", res)
 }
 
 func (pr *ProposalController) searchHandler(c *gin.Context) {

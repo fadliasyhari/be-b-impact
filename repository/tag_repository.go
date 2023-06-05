@@ -102,7 +102,7 @@ func (ta *tagRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]mod
 		return nil, dto.Paging{}, err
 	}
 	var totalRows int64
-	err = ta.db.Model(model.Tag{}).Count(&totalRows).Error
+	err = query.Model(model.Tag{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
