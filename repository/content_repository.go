@@ -133,7 +133,12 @@ func (co *contentRepository) Paging(requestQueryParam dto.RequestQueryParams) ([
 	query := co.db.Preload("Image").Preload("Tag").Preload("Category")
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
-		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
+		if key == "category" {
+			query = query.Joins("JOIN categories ON categories.id = contents.category_id").
+				Where("categories.name = ?", value)
+		} else {
+			query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
+		}
 	}
 	err := query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&content).Error
 	if err != nil {
