@@ -1,6 +1,6 @@
 
 .env
 
-log/log.txt
+!log/log.txt
 
 migration.sql
