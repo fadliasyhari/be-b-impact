@@ -33,7 +33,7 @@ func pagingValidate(requestQueryParam dto.RequestQueryParams) (dto.PaginationQue
 	orderQuery := "id"
 	if requestQueryParam.QueryParams.Order != "" && requestQueryParam.QueryParams.Sort != "" {
 		sorting := "ASC"
-		if requestQueryParam.QueryParams.Sort == "desc" {
+		if requestQueryParam.QueryParams.Sort == "DESC" {
 			sorting = "DESC"
 		}
 		orderQuery = fmt.Sprintf("%s %s", requestQueryParam.QueryParams.Order, sorting)
