@@ -59,6 +59,7 @@ func NewServer() *Server {
 	uc := manager.NewUseCaseManager(repo)
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	opt, err := redis.ParseURL(cfg.RedisConfig.Url)
 	if err != nil {
