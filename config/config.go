@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
 )
 
 type ApiConfig struct {
@@ -50,10 +49,6 @@ type Config struct {
 }
 
 func (c *Config) ReadConfigFile() error {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return errors.New("failed to load .env file")
-	}
 
 	c.RedisConfig = RedisConfig{
 		Url: os.Getenv("REDIS_URL"),
