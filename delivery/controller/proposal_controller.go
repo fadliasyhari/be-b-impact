@@ -167,6 +167,25 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		}
 
+		progressFilter = make(map[string]interface{})
+		progressFilter["label"] = "review"
+
+		progress, err = pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		propoProgressPayload = model.ProposalProgress{
+			ProposalID: proposalPayload.ID,
+			ProgressID: progress[1].ID,
+			Note:       progress[1].Name,
+			Status:     "0",
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
 		filter := make(map[string]interface{})
 		filter["role"] = "admin"
 
@@ -190,6 +209,7 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 }
 
 func (pr *ProposalController) listHandler(c *gin.Context) {
+	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	filter := make(map[string]interface{})
 
 	// Iterate over the query parameters
@@ -232,20 +252,21 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 	}
 	var proposalInterface []interface{}
 	for _, pr := range proposal {
-		res := response.MapProposalToResponse(&pr)
+		res := response.MapProposalToResponse(&pr, userTyped.Role)
 		proposalInterface = append(proposalInterface, res)
 	}
 	pr.NewSuccessPagedResponse(c, "OK", proposalInterface, paging)
 }
 
 func (pr *ProposalController) getHandler(c *gin.Context) {
+	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	id := c.Param("id")
 	proposal, err := pr.useCase.FindById(id)
 	if err != nil {
 		pr.NewFailedResponse(c, http.StatusNotFound, err.Error())
 		return
 	}
-	res := response.MapProposalToResponse(proposal)
+	res := response.MapProposalToResponse(proposal, userTyped.Role)
 	pr.NewSuccessSingleResponse(c, "OK", res)
 }
 

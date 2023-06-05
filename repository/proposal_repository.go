@@ -25,7 +25,7 @@ func (pr *proposalRepository) Delete(id string) error {
 
 func (pr *proposalRepository) Get(id string) (*model.Proposal, error) {
 	var proposal model.Proposal
-	result := pr.db.Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress", "status = ?", "1").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
+	result := pr.db.Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
 	if result != nil {
 		return nil, result
 	}
@@ -136,7 +136,7 @@ func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) (
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
 	var proposal []model.Proposal
-	query := pr.db.Preload("ProposalDetail").Preload("ProposalProgress", "status = ?", "1").Preload("ProposalProgress.Progress")
+	query := pr.db.Preload("ProposalDetail").Preload("ProposalProgress").Preload("ProposalProgress.Progress")
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
