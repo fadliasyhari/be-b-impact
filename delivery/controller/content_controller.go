@@ -298,11 +298,12 @@ func NewContentController(r *gin.Engine, useCase usecase.ContentUseCase, imageUC
 		imageUC:       imageUC,
 		tagsContentUC: tagsContentUC,
 	}
-	contentGroup := r.Group("/content", tokenMdw.RequireToken())
+	contentGroup := r.Group("/content")
 	{
 		contentGroup.GET("", controller.listHandler)
 		contentGroup.GET("/:id", controller.getHandler)
 		contentGroup.GET("/search", controller.searchHandler)
+		contentGroup.Use(tokenMdw.RequireToken())
 		contentGroup.POST("", controller.createHandler)
 		contentGroup.PUT("", controller.updateHandler)
 		contentGroup.DELETE("/:id", controller.deleteHandler)
