@@ -1,7 +1,6 @@
 package delivery
 
 import (
-	"fmt"
 	"net/http"
 
 	"be-b-impact.com/csr/config"
@@ -94,7 +93,7 @@ func NewServer() *Server {
 	return &Server{
 		ucManager:    uc,
 		engine:       r,
-		host:         fmt.Sprintf("%s:%s", cfg.ApiHost, cfg.ApiPort),
+		host:         cfg.ApiHost,
 		log:          infra.Log(),
 		authUseCase:  authUc,
 		tokenService: tokenService,
