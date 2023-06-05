@@ -50,11 +50,6 @@ func (ca *CategoryController) createHandler(c *gin.Context) {
 }
 
 func (ca *CategoryController) listHandler(c *gin.Context) {
-	userTyped := utils.AccessInsideToken(ca.BaseApi, c)
-	if userTyped.Role != "admin" && userTyped.Role != "super" {
-		ca.NewFailedResponse(c, http.StatusForbidden, "access denied")
-		return
-	}
 	filter := make(map[string]interface{})
 
 	// Iterate over the query parameters
@@ -104,11 +99,6 @@ func (ca *CategoryController) listHandler(c *gin.Context) {
 }
 
 func (ca *CategoryController) getHandler(c *gin.Context) {
-	userTyped := utils.AccessInsideToken(ca.BaseApi, c)
-	if userTyped.Role != "admin" && userTyped.Role != "super" {
-		ca.NewFailedResponse(c, http.StatusForbidden, "access denied")
-		return
-	}
 	id := c.Param("id")
 	category, err := ca.useCase.FindById(id)
 	if err != nil {
@@ -120,11 +110,6 @@ func (ca *CategoryController) getHandler(c *gin.Context) {
 }
 
 func (ca *CategoryController) searchHandler(c *gin.Context) {
-	userTyped := utils.AccessInsideToken(ca.BaseApi, c)
-	if userTyped.Role != "admin" && userTyped.Role != "super" {
-		ca.NewFailedResponse(c, http.StatusForbidden, "access denied")
-		return
-	}
 	filter := make(map[string]interface{})
 
 	// Iterate over the query parameters
@@ -186,11 +171,12 @@ func NewCategoryController(r *gin.Engine, useCase usecase.CategoryUseCase, token
 		router:  r,
 		useCase: useCase,
 	}
-	categoryGroup := r.Group("/category", tokenMdw.RequireToken())
+	categoryGroup := r.Group("/category")
 	{
 		categoryGroup.GET("", controller.listHandler)
 		categoryGroup.GET("/:id", controller.getHandler)
 		categoryGroup.GET("/search", controller.searchHandler)
+		categoryGroup.Use(tokenMdw.RequireToken())
 		categoryGroup.POST("", controller.createHandler)
 		categoryGroup.PUT("", controller.updateHandler)
 		categoryGroup.DELETE("/:id", controller.deleteHandler)

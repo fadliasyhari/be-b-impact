@@ -151,11 +151,12 @@ func NewTagController(r *gin.Engine, useCase usecase.TagUseCase, tokenMdw middle
 		router:  r,
 		useCase: useCase,
 	}
-	tagGroup := r.Group("/tag", tokenMdw.RequireToken())
+	tagGroup := r.Group("/tag")
 	{
 		tagGroup.GET("", controller.listHandler)
 		tagGroup.GET("/:id", controller.getHandler)
 		tagGroup.GET("/search", controller.searchHandler)
+		tagGroup.Use(tokenMdw.RequireToken())
 		tagGroup.POST("", controller.createHandler)
 		tagGroup.PUT("", controller.updateHandler)
 		tagGroup.DELETE("/:id", controller.deleteHandler)

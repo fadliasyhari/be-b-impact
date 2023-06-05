@@ -11,6 +11,7 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/usecase"
 	"be-b-impact.com/csr/utils/authenticator"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"

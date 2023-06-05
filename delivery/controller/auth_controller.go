@@ -56,7 +56,12 @@ func (au *AuthController) login(c *gin.Context) {
 		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	au.NewSuccessSingleResponse(c, "OK", token)
+	data := map[string]interface{}{
+		"username": payload.Username,
+		"token":    token,
+	}
+
+	au.NewSuccessMultiResponse(c, "OK", data)
 }
 
 func (au *AuthController) logout(c *gin.Context) {
