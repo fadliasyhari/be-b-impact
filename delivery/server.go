@@ -60,7 +60,13 @@ func NewServer() *Server {
 	uc := manager.NewUseCaseManager(repo)
 
 	r := gin.Default()
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Replace with your desired origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	opt, err := redis.ParseURL(cfg.RedisConfig.Url)
 	if err != nil {

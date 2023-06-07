@@ -13,7 +13,8 @@ import (
 type ProposalRepository interface {
 	BaseRepository[model.Proposal]
 	BaseRepositoryCount[model.Proposal]
-	BaseRepositoryPaging[model.Proposal]
+	BaseRepositoryPaging[dto.Proposal]
+	GetByID(id string) (*dto.Proposal, error)
 }
 type proposalRepository struct {
 	db *gorm.DB
@@ -21,6 +22,22 @@ type proposalRepository struct {
 
 func (pr *proposalRepository) Delete(id string) error {
 	return pr.db.Delete(&model.Proposal{}, "id=?", id).Error
+}
+
+func (pr *proposalRepository) GetByID(id string) (*dto.Proposal, error) {
+	var proposal dto.Proposal
+	// Add subquery to select the newest proposal_progress with status = 1
+	subquery := pr.db.Table("proposal_progresses").
+		Select("note").
+		Where("proposal_id = proposals.id").
+		Where("status = ?", "1").
+		Order("created_at DESC").
+		Limit(1)
+	result := pr.db.Select("*, (?) AS current", subquery).Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
+	if result != nil {
+		return nil, result
+	}
+	return &proposal, nil
 }
 
 func (pr *proposalRepository) Get(id string) (*model.Proposal, error) {
@@ -132,15 +149,26 @@ func (pr *proposalRepository) CountData(fieldname string, id string) error {
 	return nil
 }
 
-func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]model.Proposal, dto.Paging, error) {
+func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]dto.Proposal, dto.Paging, error) {
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
-	var proposal []model.Proposal
+	var proposal []dto.Proposal
 	query := pr.db.Preload("ProposalDetail").Preload("ProposalProgress").Preload("ProposalProgress.Progress")
+
+	// Add subquery to select the newest proposal_progress with status = 1
+	subquery := pr.db.Table("proposal_progresses").
+		Select("note").
+		Where("proposal_id = proposals.id").
+		Where("status = ?", "1").
+		Order("created_at DESC").
+		Limit(1)
+	query = query.Select("*, (?) AS current", subquery)
+
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 	}
+
 	err := query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&proposal).Error
 	if err != nil {
 		return nil, dto.Paging{}, err

@@ -145,7 +145,7 @@ func (co *contentRepository) Paging(requestQueryParam dto.RequestQueryParams) ([
 		return nil, dto.Paging{}, err
 	}
 	var totalRows int64
-	err = co.db.Model(model.Content{}).Count(&totalRows).Error
+	err = query.Model(model.Content{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}

@@ -48,6 +48,30 @@ func (pp *proposalProgressRepository) Save(payload *model.ProposalProgress) erro
 func (pp *proposalProgressRepository) Update(payload *model.ProposalProgress) error {
 	updateFields := make(map[string]interface{})
 
+	if payload.Note != "" {
+		updateFields["note"] = payload.Note
+	}
+
+	if payload.Status != "" {
+		updateFields["status"] = payload.Status
+	}
+
+	if payload.ReviewLocation != "" {
+		updateFields["review_location"] = payload.ReviewLocation
+	}
+
+	if !payload.ReviewDate.IsZero() {
+		updateFields["review_date"] = payload.ReviewDate
+	}
+
+	if payload.ReviewCP != "" {
+		updateFields["review_cp"] = payload.ReviewCP
+	}
+
+	if payload.ReviewFeedback != "" {
+		updateFields["review_feedback"] = payload.ReviewFeedback
+	}
+
 	return pp.db.Model(&model.ProposalProgress{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 

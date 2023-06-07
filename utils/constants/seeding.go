@@ -32,8 +32,8 @@ var ProgressSeed = []model.Progress{
 		Label: "review",
 	},
 	{
-		Name:  "Under Review",
-		Label: "review",
+		Name:  "Approve or Reject",
+		Label: "decision",
 	},
 	{
 		Name:  "Proposal Approved",

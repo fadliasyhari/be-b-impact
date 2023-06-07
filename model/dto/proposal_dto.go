@@ -1,6 +1,11 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"be-b-impact.com/csr/model"
+	"gorm.io/gorm"
+)
 
 type ProposalDTO struct {
 	ID              string        `json:"id"`
@@ -14,7 +19,7 @@ type ProposalDTO struct {
 	Address         string        `json:"address"`
 	Description     string        `json:"description"`
 	Status          string        `json:"status"`
-	CurrentProgress ProgressDTO   `json:"current_progress"`
+	CurrentProgress string        `json:"current_progress"`
 	ProjectName     string        `json:"project_name"`
 	PartnershipType string        `json:"partnership_type,omitempty"`
 	StartDate       time.Time     `json:"start_date"`
@@ -30,16 +35,47 @@ type ProposalDTO struct {
 }
 
 type ProgressDTO struct {
-	Name      string    `json:"name"`
-	Label     string    `json:"label"`
-	Status    string    `json:"status"`
-	Note      string    `json:"note"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID             string    `json:"id"`
+	Name           string    `json:"name"`
+	Label          string    `json:"label"`
+	Status         string    `json:"status"`
+	Note           string    `json:"note"`
+	ReviewLocation string    `json:"review_location,omitempty"`
+	ReviewDate     time.Time `json:"review_date,omitempty"`
+	ReviewCP       string    `json:"review_cp,omitempty"`
+	ReviewFeedback string    `json:"review_feedback,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type FileDTO struct {
 	Label     string    `json:"label"`
 	FileURL   string    `json:"file_url"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Proposal struct {
+	ID                 string                   `json:"id"`
+	CreatedAt          time.Time                `json:"created_at"`
+	UpdatedAt          time.Time                `json:"updated_at"`
+	OrgName            string                   `gorm:"varchar" json:"org_name"`
+	OrganizationTypeID string                   `json:"organization_type_id"` // org type refer to category which useFor organization
+	OrganizatonType    model.Category           `json:"organization_type,omitempty" gorm:"foreignKey:OrganizationTypeID"`
+	Email              string                   `gorm:"varchar" json:"email"`
+	Phone              string                   `gorm:"varchar" json:"phone"`
+	PICName            string                   `gorm:"varchar" json:"pic_name"`
+	City               string                   `gorm:"varchar" json:"city"`
+	Current            string                   `json:"current"`
+	PostalCode         string                   `gorm:"varchar" json:"postal_code"`
+	Address            string                   `gorm:"text" json:"address"`
+	Description        string                   `gorm:"text" json:"description"`
+	Status             string                   `gorm:"varchar" json:"status"`
+	CreatedBy          string                   `json:"created_by"`
+	DeletedAt          gorm.DeletedAt           `gorm:"index" json:"-"`
+	DeletedBy          string                   `json:"deleted_by"`
+	ReviewerID         string                   `json:"reviewer_id,omitempty"`
+	ProposalDetail     model.ProposalDetail     `json:"proposal_detail,omitempty"`
+	File               []model.File             `json:"file,omitempty"`
+	Progress           []model.Progress         `json:"progress,omitempty" gorm:"many2many:proposal_progresses;"`
+	ProposalProgress   []model.ProposalProgress `json:"proposal_progress"`
 }

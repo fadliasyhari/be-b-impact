@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -177,8 +176,8 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 
 		propoProgressPayload = model.ProposalProgress{
 			ProposalID: proposalPayload.ID,
-			ProgressID: progress[1].ID,
-			Note:       progress[1].Name,
+			ProgressID: progress[0].ID,
+			Note:       progress[0].Name,
 			Status:     "0",
 		}
 
@@ -186,6 +185,7 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		}
 
+		// assign least assigned admin as reviewer
 		filter := make(map[string]interface{})
 		filter["role"] = "admin"
 
@@ -196,7 +196,6 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 		}
 
 		if len(admins) > 0 {
-			fmt.Println(admins)
 			proposalPayload.ReviewerID = admins[0].ID
 			if err := pr.useCase.UpdateData(&proposalPayload); err != nil {
 				pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
@@ -252,7 +251,7 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 	}
 	var proposalInterface []interface{}
 	for _, pr := range proposal {
-		res := response.MapProposalToResponse(&pr, userTyped.Role)
+		res := response.MapProposalToResponse(pr, userTyped.Role)
 		proposalInterface = append(proposalInterface, res)
 	}
 	pr.NewSuccessPagedResponse(c, "OK", proposalInterface, paging)
@@ -261,12 +260,12 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 func (pr *ProposalController) getHandler(c *gin.Context) {
 	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	id := c.Param("id")
-	proposal, err := pr.useCase.FindById(id)
+	proposal, err := pr.useCase.FindPropById(id)
 	if err != nil {
 		pr.NewFailedResponse(c, http.StatusNotFound, err.Error())
 		return
 	}
-	res := response.MapProposalToResponse(proposal, userTyped.Role)
+	res := response.MapProposalToSingleResponse(proposal, userTyped.Role)
 	pr.NewSuccessSingleResponse(c, "OK", res)
 }
 
@@ -454,7 +453,7 @@ func (pr *ProposalController) deleteHandler(c *gin.Context) {
 	c.String(http.StatusNoContent, "Success Delete")
 }
 
-func (pr *ProposalController) progressHandler(c *gin.Context) {
+func (pr *ProposalController) createProgressHandler(c *gin.Context) {
 	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	if userTyped.Role != "admin" && userTyped.Role != "super" {
 		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
@@ -466,12 +465,277 @@ func (pr *ProposalController) progressHandler(c *gin.Context) {
 		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	progress, err := pr.progressUC.FindById(payload.ProgressID)
+	if err != nil {
+		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	payload.Note = progress.Name
+
 	if err := pr.propoProgressUC.SaveData(&payload); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	pr.NewSuccessSingleResponse(c, "OK", payload)
+}
+
+func (pr *ProposalController) updateProgressHandler(c *gin.Context) {
+	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
+	if userTyped.Role != "admin" && userTyped.Role != "super" {
+		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
+		return
+	}
+
+	type ProgressReq struct {
+		ProposalId         string    `json:"proposal_id"`
+		ProposalProgressId string    `json:"proposal_progress_id"`
+		Progress           string    `json:"progress"`
+		ReviewLocation     string    `json:"review_location"`
+		ReviewCP           string    `json:"review_cp"`
+		ReviewDate         time.Time `json:"review_date"`
+		ReviewFeedback     string    `json:"review_feedback"`
+	}
+
+	var payload ProgressReq
+	if err := pr.ParseRequestBody(c, &payload); err != nil {
+		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	proposal, err := pr.useCase.FindById(payload.ProposalId)
+	if err != nil {
+		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	// update to review
+	if payload.Progress == "review" {
+		updatePayload := model.ProposalProgress{
+			BaseModel: model.BaseModel{
+				ID: payload.ProposalProgressId,
+			},
+			Status: "1",
+		}
+		if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		progressFilter := make(map[string]interface{})
+		progressFilter["label"] = "decision"
+
+		progress, err := pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		propoProgressPayload := model.ProposalProgress{
+			ProposalID: proposal.ID,
+			ProgressID: progress[0].ID,
+			Note:       progress[0].Name,
+			Status:     "0",
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		pr.NewSuccessSingleResponse(c, "OK", payload)
+	}
+	// update to approved
+	if payload.Progress == "approved" {
+		if err := pr.propoProgressUC.DeleteData(payload.ProposalProgressId); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// add approved progress
+		progressFilter := make(map[string]interface{})
+		progressFilter["label"] = payload.Progress
+
+		progress, err := pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		propoProgressPayload := model.ProposalProgress{
+			ProposalID:     proposal.ID,
+			ProgressID:     progress[0].ID,
+			Note:           progress[0].Name,
+			Status:         "1",
+			ReviewLocation: payload.ReviewLocation,
+			ReviewCP:       payload.ReviewCP,
+			ReviewDate:     payload.ReviewDate,
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// add in progress
+		progressFilter = make(map[string]interface{})
+		progressFilter["label"] = "inProgress"
+
+		progress, err = pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		propoProgressPayload = model.ProposalProgress{
+			ProposalID: proposal.ID,
+			ProgressID: progress[0].ID,
+			Note:       progress[0].Name,
+			Status:     "0",
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		pr.NewSuccessSingleResponse(c, "OK", payload)
+	}
+	// update if rejected
+	if payload.Progress == "rejected" {
+		if err := pr.propoProgressUC.DeleteData(payload.ProposalProgressId); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// add approved progress
+		progressFilter := make(map[string]interface{})
+		progressFilter["label"] = payload.Progress
+
+		progress, err := pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		propoProgressPayload := model.ProposalProgress{
+			ProposalID:     proposal.ID,
+			ProgressID:     progress[0].ID,
+			Note:           progress[0].Name,
+			Status:         "1",
+			ReviewFeedback: payload.ReviewFeedback,
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// updateProposal := model.Proposal{
+		// 	BaseModel: model.BaseModel{
+		// 		ID: proposal.ID,
+		// 	},
+		// 	Status: "0",
+		// }
+		// if err := pr.useCase.UpdateData(&updateProposal); err != nil {
+		// 	pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		// 	return
+		// }
+		pr.NewSuccessSingleResponse(c, "OK", payload)
+	}
+
+	// update if inProgress
+	if payload.Progress == "inProgress" {
+
+		updatePayload := model.ProposalProgress{
+			BaseModel: model.BaseModel{
+				ID: payload.ProposalProgressId,
+			},
+			Status: "1",
+		}
+
+		if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		progressFilter := make(map[string]interface{})
+		progressFilter["label"] = "completed"
+
+		progress, err := pr.progressUC.SearchBy(progressFilter)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		propoProgressPayload := model.ProposalProgress{
+			ProposalID: proposal.ID,
+			ProgressID: progress[0].ID,
+			Note:       progress[0].Name,
+			Status:     "0",
+		}
+
+		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		pr.NewSuccessSingleResponse(c, "OK", payload)
+	}
+
+	// update to completed
+	if payload.Progress == "completed" {
+		updatePayload := model.ProposalProgress{
+			BaseModel: model.BaseModel{
+				ID: payload.ProposalProgressId,
+			},
+			Status: "1",
+		}
+
+		if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		}
+
+		pr.NewSuccessSingleResponse(c, "OK", payload)
+	}
+}
+
+func (pr *ProposalController) uploadFileHandler(c *gin.Context) {
+	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
+	if userTyped.Role != "admin" && userTyped.Role != "super" {
+		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
+		return
+	}
+
+	// Parse the form data
+	if err := c.Request.ParseMultipartForm(10 * 1024 * 1024); err != nil {
+		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	file, _, err := c.Request.FormFile("file")
+	ProposalId := c.Request.FormValue("ProposalId")
+	label := c.Request.FormValue("label")
+	if label == "" {
+		label = "accountable_report"
+	}
+
+	if err == nil {
+		fileUrl, err := pr.fileUC.FirebaseUpload(file)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// Create the file payload
+		filePayload := model.File{
+			BaseModel:  model.BaseModel{},
+			Label:      label,
+			FileURL:    fileUrl,
+			ProposalID: ProposalId,
+		}
+		if err := pr.fileUC.SaveData(&filePayload); err != nil {
+			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+	}
 }
 
 func NewProposalController(r *gin.Engine, useCase usecase.ProposalUseCase, propoDetailUC usecase.ProposalDetailUseCase, fileUC usecase.FileUseCase, progressUC usecase.ProgressUseCase, propoProgressUC usecase.ProposalProgressUseCase, userUC usecase.UsersUseCase, tokenMdw middleware.AuthTokenMiddlerware) *ProposalController {
@@ -490,7 +754,9 @@ func NewProposalController(r *gin.Engine, useCase usecase.ProposalUseCase, propo
 		proposalGroup.GET("/:id", controller.getHandler)
 		proposalGroup.GET("/search", controller.searchHandler)
 		proposalGroup.POST("", controller.createHandler)
-		proposalGroup.POST("/progress", controller.progressHandler)
+		proposalGroup.POST("/progress", controller.createProgressHandler)
+		proposalGroup.PUT("/progress", controller.updateProgressHandler)
+		proposalGroup.POST("/file", controller.uploadFileHandler)
 		proposalGroup.PUT("", controller.updateHandler)
 		proposalGroup.DELETE("/:id", controller.deleteHandler)
 	}

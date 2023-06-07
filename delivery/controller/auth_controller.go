@@ -6,6 +6,7 @@ import (
 	"be-b-impact.com/csr/delivery/api"
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/usecase"
+	"be-b-impact.com/csr/utils"
 	"be-b-impact.com/csr/utils/authenticator"
 	"github.com/gin-gonic/gin"
 )
@@ -81,6 +82,29 @@ func (au *AuthController) logout(c *gin.Context) {
 	})
 }
 
+func (au *AuthController) forgetPassword(c *gin.Context) {
+	var payload model.User
+
+	if err := au.ParseRequestBody(c, &payload); err != nil {
+		au.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Perform necessary logic for forget password, e.g., generate reset token, store in database, etc.
+
+	// Generate a password reset link
+	resetLink := "https://example.com/reset-password?token=YOUR_RESET_TOKEN"
+
+	// Send password reset email
+	err := utils.SendResetEmail(payload.Email, resetLink)
+	if err != nil {
+		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	au.NewSuccessSingleResponse(c, "Password reset email has been sent successfully", http.StatusOK)
+}
+
 func NewAuthController(r *gin.Engine, userUC usecase.UsersUseCase, authUC usecase.AuthUseCase) *AuthController {
 	controller := &AuthController{
 		router: r,
@@ -89,6 +113,7 @@ func NewAuthController(r *gin.Engine, userUC usecase.UsersUseCase, authUC usecas
 	}
 	r.POST("/auth/register", controller.registerHandler)
 	r.POST("/auth/login", controller.login)
+	r.POST("/auth/forget-password", controller.forgetPassword)
 	r.GET("/auth/logout", controller.logout)
 	return controller
 }

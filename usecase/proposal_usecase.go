@@ -10,7 +10,8 @@ import (
 
 type ProposalUseCase interface {
 	BaseUseCase[model.Proposal]
-	BaseUseCasePaging[model.Proposal]
+	BaseUseCasePaging[dto.Proposal]
+	FindPropById(id string) (*dto.Proposal, error)
 }
 
 type proposalUseCase struct {
@@ -27,6 +28,14 @@ func (pr *proposalUseCase) DeleteData(id string) error {
 
 func (pr *proposalUseCase) FindAll() ([]model.Proposal, error) {
 	return pr.repo.List()
+}
+
+func (pr *proposalUseCase) FindPropById(id string) (*dto.Proposal, error) {
+	proposal, err := pr.repo.GetByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("proposal with ID %s not found", id)
+	}
+	return proposal, nil
 }
 
 func (pr *proposalUseCase) FindById(id string) (*model.Proposal, error) {
@@ -77,7 +86,7 @@ func (pr *proposalUseCase) SearchBy(by map[string]interface{}) ([]model.Proposal
 	return proposals, nil
 }
 
-func (pr *proposalUseCase) Pagination(requestQueryParams dto.RequestQueryParams) ([]model.Proposal, dto.Paging, error) {
+func (pr *proposalUseCase) Pagination(requestQueryParams dto.RequestQueryParams) ([]dto.Proposal, dto.Paging, error) {
 	if !requestQueryParams.QueryParams.IsSortValid() {
 		return nil, dto.Paging{}, fmt.Errorf("invalid sort by: %s", requestQueryParams.QueryParams.Sort)
 	}
