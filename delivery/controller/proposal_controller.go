@@ -208,7 +208,6 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 }
 
 func (pr *ProposalController) listHandler(c *gin.Context) {
-	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	filter := make(map[string]interface{})
 
 	// Iterate over the query parameters
@@ -251,21 +250,20 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 	}
 	var proposalInterface []interface{}
 	for _, pr := range proposal {
-		res := response.MapProposalToResponse(pr, userTyped.Role)
+		res := response.MapProposalToResponse(&pr)
 		proposalInterface = append(proposalInterface, res)
 	}
 	pr.NewSuccessPagedResponse(c, "OK", proposalInterface, paging)
 }
 
 func (pr *ProposalController) getHandler(c *gin.Context) {
-	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 	id := c.Param("id")
 	proposal, err := pr.useCase.FindPropById(id)
 	if err != nil {
 		pr.NewFailedResponse(c, http.StatusNotFound, err.Error())
 		return
 	}
-	res := response.MapProposalToSingleResponse(proposal, userTyped.Role)
+	res := response.MapProposalToResponse(proposal)
 	pr.NewSuccessSingleResponse(c, "OK", res)
 }
 
