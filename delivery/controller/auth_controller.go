@@ -25,7 +25,7 @@ func (au *AuthController) registerHandler(c *gin.Context) {
 		au.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	if payload.Role == "" {
+	if payload.Role == "user" {
 		payload.Role = "member"
 	}
 
