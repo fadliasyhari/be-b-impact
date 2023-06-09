@@ -10,7 +10,7 @@ import (
 
 type ProposalUseCase interface {
 	BaseUseCase[model.Proposal]
-	BaseUseCasePaging[dto.Proposal]
+	BaseUseCasePaging[model.Proposal]
 	FindPropById(id string) (*dto.Proposal, error)
 }
 
@@ -86,7 +86,7 @@ func (pr *proposalUseCase) SearchBy(by map[string]interface{}) ([]model.Proposal
 	return proposals, nil
 }
 
-func (pr *proposalUseCase) Pagination(requestQueryParams dto.RequestQueryParams) ([]dto.Proposal, dto.Paging, error) {
+func (pr *proposalUseCase) Pagination(requestQueryParams dto.RequestQueryParams) ([]model.Proposal, dto.Paging, error) {
 	if !requestQueryParams.QueryParams.IsSortValid() {
 		return nil, dto.Paging{}, fmt.Errorf("invalid sort by: %s", requestQueryParams.QueryParams.Sort)
 	}

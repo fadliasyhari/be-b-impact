@@ -8,30 +8,31 @@ import (
 )
 
 type ProposalDTO struct {
-	ID              string        `json:"id"`
-	OrgName         string        `json:"org_name"`
-	OrganizatonType string        `json:"organization_type,omitempty"`
-	Email           string        `json:"email"`
-	Phone           string        `json:"phone"`
-	PICName         string        `json:"pic_name"`
-	City            string        `json:"city"`
-	PostalCode      string        `json:"postal_code"`
-	Address         string        `json:"address"`
-	Description     string        `json:"description"`
-	Status          string        `json:"status"`
-	CurrentProgress string        `json:"current_progress"`
-	ProjectName     string        `json:"project_name"`
-	PartnershipType string        `json:"partnership_type,omitempty"`
-	StartDate       time.Time     `json:"start_date"`
-	EndDate         time.Time     `json:"end_date"`
-	Objective       string        `json:"objective"`
-	Alignment       string        `json:"alignment"`
-	CreatedBy       string        `json:"created_by"`
-	Reviewer        string        `json:"reviewer,omitempty"`
-	Files           []FileDTO     `json:"files,omitempty"`
-	Progresses      []ProgressDTO `json:"progresses,omitempty"`
-	CreatedAt       time.Time     `json:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at"`
+	ID               string        `json:"id"`
+	OrgName          string        `json:"org_name"`
+	OrganizatonType  CategoryDTO   `json:"organization_type,omitempty"`
+	Email            string        `json:"email"`
+	Phone            string        `json:"phone"`
+	PICName          string        `json:"pic_name"`
+	City             string        `json:"city"`
+	PostalCode       string        `json:"postal_code"`
+	Address          string        `json:"address"`
+	Description      string        `json:"description"`
+	Status           string        `json:"status"`
+	CurrentProgress  string        `json:"current_progress"`
+	ProposalDetailID string        `json:"proposal_detail_id"`
+	ProjectName      string        `json:"project_name"`
+	PartnershipType  CategoryDTO   `json:"partnership_type,omitempty"`
+	StartDate        time.Time     `json:"start_date"`
+	EndDate          time.Time     `json:"end_date"`
+	Objective        string        `json:"objective"`
+	Alignment        string        `json:"alignment"`
+	CreatedBy        string        `json:"created_by"`
+	Reviewer         string        `json:"reviewer,omitempty"`
+	Files            []FileDTO     `json:"files,omitempty"`
+	Progresses       []ProgressDTO `json:"progresses,omitempty"`
+	CreatedAt        time.Time     `json:"created_at"`
+	UpdatedAt        time.Time     `json:"updated_at"`
 }
 
 type ProgressDTO struct {
@@ -49,6 +50,7 @@ type ProgressDTO struct {
 }
 
 type FileDTO struct {
+	ID        string    `json:"id"`
 	Label     string    `json:"label"`
 	FileURL   string    `json:"file_url"`
 	CreatedAt time.Time `json:"created_at"`
@@ -65,7 +67,7 @@ type Proposal struct {
 	Phone              string                   `gorm:"varchar" json:"phone"`
 	PICName            string                   `gorm:"varchar" json:"pic_name"`
 	City               string                   `gorm:"varchar" json:"city"`
-	Current            string                   `json:"current"`
+	CurrentProgress    string                   `json:"current_progress"`
 	PostalCode         string                   `gorm:"varchar" json:"postal_code"`
 	Address            string                   `gorm:"text" json:"address"`
 	Description        string                   `gorm:"text" json:"description"`

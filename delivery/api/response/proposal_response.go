@@ -1,36 +1,47 @@
 package response
 
 import (
+	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 )
 
-func MapProposalToResponse(proposal *dto.Proposal) dto.ProposalDTO {
+func MapProposalToResponse(proposal *model.Proposal) dto.ProposalDTO {
 	res := dto.ProposalDTO{
-		ID:              proposal.ID,
-		OrgName:         proposal.OrgName,
-		OrganizatonType: proposal.OrganizatonType.Name,
-		Email:           proposal.Email,
-		Phone:           proposal.Phone,
-		PICName:         proposal.PICName,
-		City:            proposal.City,
-		PostalCode:      proposal.PostalCode,
-		Address:         proposal.Address,
-		Description:     proposal.Description,
-		CurrentProgress: proposal.Current,
-		Status:          proposal.Status,
-		ProjectName:     proposal.ProposalDetail.ProjectName,
-		PartnershipType: proposal.ProposalDetail.PartnershipType.Name,
-		StartDate:       proposal.ProposalDetail.StartDate,
-		EndDate:         proposal.ProposalDetail.EndDate,
-		Objective:       proposal.ProposalDetail.Objective,
-		Alignment:       proposal.ProposalDetail.Alignment,
-		CreatedBy:       proposal.CreatedBy,
-		Reviewer:        proposal.ReviewerID,
-		CreatedAt:       proposal.CreatedAt,
-		UpdatedAt:       proposal.UpdatedAt,
+		ID:      proposal.ID,
+		OrgName: proposal.OrgName,
+		OrganizatonType: dto.CategoryDTO{
+			ID:   proposal.OrganizatonType.ID,
+			Name: proposal.OrganizatonType.Name,
+		},
+		Email:            proposal.Email,
+		Phone:            proposal.Phone,
+		PICName:          proposal.PICName,
+		City:             proposal.City,
+		PostalCode:       proposal.PostalCode,
+		Address:          proposal.Address,
+		Description:      proposal.Description,
+		Status:           proposal.Status,
+		CurrentProgress:  proposal.CurrentProgress,
+		ProposalDetailID: proposal.ProposalDetail.ID,
+		ProjectName:      proposal.ProposalDetail.ProjectName,
+		PartnershipType: dto.CategoryDTO{
+			ID:   proposal.ProposalDetail.PartnershipType.ID,
+			Name: proposal.ProposalDetail.PartnershipType.Name,
+		},
+		StartDate:  proposal.ProposalDetail.StartDate,
+		EndDate:    proposal.ProposalDetail.EndDate,
+		Objective:  proposal.ProposalDetail.Objective,
+		Alignment:  proposal.ProposalDetail.Alignment,
+		CreatedBy:  proposal.CreatedBy,
+		Reviewer:   proposal.ReviewerID,
+		Files:      []dto.FileDTO{},
+		Progresses: []dto.ProgressDTO{},
+		CreatedAt:  proposal.CreatedAt,
+		UpdatedAt:  proposal.UpdatedAt,
 	}
 	for _, v := range proposal.File {
 		res.Files = append(res.Files, dto.FileDTO{
+			ID:        v.ID,
 			Label:     v.Label,
 			FileURL:   v.FileURL,
 			CreatedAt: v.CreatedAt,

@@ -13,7 +13,7 @@ import (
 type ProposalRepository interface {
 	BaseRepository[model.Proposal]
 	BaseRepositoryCount[model.Proposal]
-	BaseRepositoryPaging[dto.Proposal]
+	BaseRepositoryPaging[model.Proposal]
 	GetByID(id string) (*dto.Proposal, error)
 }
 type proposalRepository struct {
@@ -26,14 +26,7 @@ func (pr *proposalRepository) Delete(id string) error {
 
 func (pr *proposalRepository) GetByID(id string) (*dto.Proposal, error) {
 	var proposal dto.Proposal
-	// Add subquery to select the newest proposal_progress with status = 1
-	subquery := pr.db.Table("proposal_progresses").
-		Select("note").
-		Where("proposal_id = proposals.id").
-		Where("status = ?", "1").
-		Order("created_at DESC").
-		Limit(1)
-	result := pr.db.Select("*, (?) AS current", subquery).Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
+	result := pr.db.Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
 	if result != nil {
 		return nil, result
 	}
@@ -114,6 +107,10 @@ func (pr *proposalRepository) Update(payload *model.Proposal) error {
 		updateFields["reviewer_id"] = payload.ReviewerID
 	}
 
+	if payload.CurrentProgress != "" {
+		updateFields["current_progress"] = payload.CurrentProgress
+	}
+
 	return pr.db.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
@@ -149,20 +146,11 @@ func (pr *proposalRepository) CountData(fieldname string, id string) error {
 	return nil
 }
 
-func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]dto.Proposal, dto.Paging, error) {
+func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]model.Proposal, dto.Paging, error) {
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
-	var proposal []dto.Proposal
-	query := pr.db.Preload("ProposalDetail").Preload("ProposalProgress").Preload("ProposalProgress.Progress")
-
-	// Add subquery to select the newest proposal_progress with status = 1
-	subquery := pr.db.Table("proposal_progresses").
-		Select("note").
-		Where("proposal_id = proposals.id").
-		Where("status = ?", "1").
-		Order("created_at DESC").
-		Limit(1)
-	query = query.Select("*, (?) AS current", subquery)
+	var proposal []model.Proposal
+	query := pr.db.Preload("ProposalDetail").Preload("ProposalProgress").Preload("ProposalProgress.Progress").Preload("File")
 
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike

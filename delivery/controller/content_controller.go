@@ -312,5 +312,6 @@ func NewContentController(r *gin.Engine, useCase usecase.ContentUseCase, imageUC
 		contentGroup.PUT("", controller.updateHandler)
 		contentGroup.DELETE("/:id", controller.deleteHandler)
 	}
+
 	return controller
 }

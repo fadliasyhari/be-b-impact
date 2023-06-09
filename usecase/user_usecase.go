@@ -39,12 +39,12 @@ func (us *usersUseCase) FindById(id string) (*model.User, error) {
 }
 
 func (us *usersUseCase) SaveData(payload *model.User) error {
-	// err := payload.Vaildate()
-	// if err != nil {
-	// 	return err
-	// }
+	err := payload.Validate()
+	if err != nil {
+		return err
+	}
 	// cek jika data sudah ada -> count > 0
-	err := us.repo.CountData(payload.Username, payload.ID)
+	err = us.repo.CountData(payload.Username, payload.ID)
 	if err != nil {
 		return err
 	}

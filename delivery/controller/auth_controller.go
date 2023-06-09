@@ -52,13 +52,17 @@ func (au *AuthController) login(c *gin.Context) {
 		au.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	token, err := au.authUC.Login(payload.Username, payload.Password)
+
+	currentUser, token, err := au.authUC.Login(payload.Username, payload.Password)
 	if err != nil {
 		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 	data := map[string]interface{}{
-		"username": payload.Username,
+		"user_id":  currentUser.ID,
+		"username": currentUser.Username,
+		"role":     currentUser.Role,
 		"token":    token,
 	}
 

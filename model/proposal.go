@@ -16,6 +16,7 @@ type Proposal struct {
 	PostalCode         string             `gorm:"varchar" json:"postal_code"`
 	Address            string             `gorm:"text" json:"address"`
 	Description        string             `gorm:"text" json:"description"`
+	CurrentProgress    string             `gorm:"varchar" json:"current_progress"`
 	Status             string             `gorm:"varchar" json:"status"`
 	CreatedBy          string             `json:"created_by"`
 	DeletedAt          gorm.DeletedAt     `gorm:"index" json:"-"`

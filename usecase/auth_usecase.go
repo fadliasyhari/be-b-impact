@@ -9,7 +9,7 @@ import (
 )
 
 type AuthUseCase interface {
-	Login(username string, password string) (token string, err error)
+	Login(username string, password string) (currentUser *model.User, token string, err error)
 	Logout(token string) error
 	TokenRegister(user *model.User) (token string, err error)
 }
@@ -29,18 +29,18 @@ func (a *authUseCase) Logout(token string) error {
 	return nil
 }
 
-func (a *authUseCase) Login(username string, password string) (token string, err error) {
+func (a *authUseCase) Login(username string, password string) (currentUser *model.User, token string, err error) {
 	user, err := a.repo.GetByUsernamePassword(username, password)
 	if err != nil {
-		return "", fmt.Errorf("user with username %s not found", username)
+		return nil, "", fmt.Errorf("user with username %s not found", username)
 	}
 
 	tokenDetail, _ := a.tokenService.CreateAccessToken(user)
 	err = a.tokenService.StoreAccessToken(user.Username, tokenDetail)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
-	return tokenDetail.AccessToken, nil
+	return user, tokenDetail.AccessToken, nil
 }
 
 func (a *authUseCase) TokenRegister(user *model.User) (token string, err error) {
