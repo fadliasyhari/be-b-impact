@@ -21,6 +21,9 @@ type AuthController struct {
 func (au *AuthController) registerHandler(c *gin.Context) {
 	var payload model.User
 
+	if payload.Role == "" {
+		payload.Role = "member"
+	}
 	if err := au.ParseRequestBody(c, &payload); err != nil {
 		au.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
