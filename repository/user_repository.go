@@ -119,7 +119,7 @@ func (us *usersRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]m
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
 	var users []model.User
-	err := us.db.Select("id, username, email, role, status, created_at, updated_at").Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&users).Error
+	err := us.db.Select("id, username, email, role, status, created_at, updated_at").Where("role = ?", "admin").Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&users).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
