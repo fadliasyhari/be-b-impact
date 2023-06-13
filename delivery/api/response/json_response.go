@@ -34,14 +34,24 @@ func SendMultiResponse(c *gin.Context, description string, data map[string]inter
 }
 
 func SendPagedResponse(c *gin.Context, description string, data []interface{}, paging dto.Paging) {
-	c.JSON(http.StatusOK, &PagedResponse{
+	response := struct {
+		Status Status        `json:"status"`
+		Data   []interface{} `json:"data"`
+		Paging dto.Paging    `json:"paging"`
+	}{
 		Status: Status{
 			Code:        http.StatusOK,
 			Description: description,
 		},
 		Data:   data,
 		Paging: paging,
-	})
+	}
+
+	if len(data) == 0 {
+		response.Data = []interface{}{} // Set data to an empty array
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func SendErrorResponse(c *gin.Context, code int, description string) {
