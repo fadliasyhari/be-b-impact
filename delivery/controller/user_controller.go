@@ -50,6 +50,18 @@ func (us *UsersController) listHandler(c *gin.Context) {
 		us.NewFailedResponse(c, http.StatusForbidden, "access denied")
 		return
 	}
+	filter := make(map[string]interface{})
+
+	// Iterate over the query parameters
+	for key, values := range c.Request.URL.Query() {
+		// Skip if the key is empty or has multiple values
+		if key == "page" || key == "limit" || key == "order" || key == "sort" || key == "" || len(values) != 1 {
+			continue
+		}
+
+		// Add key-value pair to the filter
+		filter[key] = values[0]
+	}
 
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
@@ -72,6 +84,7 @@ func (us *UsersController) listHandler(c *gin.Context) {
 			Page:  page,
 			Limit: limit,
 		},
+		Filter: filter,
 	}
 	users, paging, err := us.useCase.Pagination(requestQueryParams)
 	if err != nil {
