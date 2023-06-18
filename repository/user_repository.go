@@ -119,7 +119,13 @@ func (us *usersRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]m
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
 	var users []model.User
-	err := us.db.Select("id, username, email, role, status, created_at, updated_at").Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&users).Error
+	query := us.db
+	for key, value := range requestQueryParam.Filter {
+		// Perform case-insensitive search using ilike
+		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
+	}
+	
+	err := query.Select("id, username, email, role, status, created_at, updated_at").Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&users).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
