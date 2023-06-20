@@ -242,9 +242,7 @@ func (pr *ProposalController) listHandler(c *gin.Context) {
 	if userTyped.Role == "admin" {
 		filter["reviewer_id"] = userTyped.UserId
 	}
-	if userTyped.Role == "super" {
-		filter["status"] = "1"
-	}
+
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		pr.NewFailedResponse(c, http.StatusBadRequest, "invalid page number")
