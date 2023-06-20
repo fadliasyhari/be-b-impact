@@ -7,12 +7,15 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/repository"
+	"gorm.io/gorm"
 )
 
 type ImageUseCase interface {
 	BaseUseCase[model.Image]
 	BaseUseCasePaging[model.Image]
 	FirebaseUpload(file multipart.File) (string, error)
+	SaveImage(payload *model.Image, tx *gorm.DB) error
+	DeleteDataTrx(id string, tx *gorm.DB) error
 }
 
 type imageUseCase struct {
@@ -25,6 +28,14 @@ func (im *imageUseCase) DeleteData(id string) error {
 		return fmt.Errorf("image with ID %s not found", id)
 	}
 	return im.repo.Delete(image.ID)
+}
+
+func (im *imageUseCase) DeleteDataTrx(id string, tx *gorm.DB) error {
+	image, err := im.FindById(id)
+	if err != nil {
+		return fmt.Errorf("image with ID %s not found", id)
+	}
+	return im.repo.DeleteTrx(image.ID, tx)
 }
 
 func (im *imageUseCase) FindAll() ([]model.Image, error) {
@@ -49,6 +60,14 @@ func (im *imageUseCase) SaveData(payload *model.Image) error {
 	// 	return err
 	// }
 	return im.repo.Save(payload)
+}
+
+func (im *imageUseCase) SaveImage(payload *model.Image, tx *gorm.DB) error {
+	// Save the Image using the provided transaction
+	if err := im.repo.SaveTrx(payload, tx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (im *imageUseCase) UpdateData(payload *model.Image) error {

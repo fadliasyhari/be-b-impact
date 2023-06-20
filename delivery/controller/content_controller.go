@@ -44,6 +44,10 @@ func (co *ContentController) createHandler(c *gin.Context) {
 	excerpt := c.Request.FormValue("excerpt")
 	categoryID := c.Request.FormValue("category_id")
 	tagsString := c.Request.FormValue("tags")
+	file, _, err := c.Request.FormFile("images")
+	if err != nil {
+		co.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
+	}
 
 	// Create the content payload
 	payload := model.Content{
@@ -56,45 +60,15 @@ func (co *ContentController) createHandler(c *gin.Context) {
 		CreatedBy:  userTyped.UserId,
 	}
 
-	if err := co.useCase.SaveData(&payload); err != nil {
-		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	var tags []string
 	if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
 		co.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
 		return
 	}
 
-	for _, v := range tags {
-		tcPayload := model.TagsContent{
-			TagID:     v,
-			ContentID: payload.ID,
-		}
-		if err := co.tagsContentUC.SaveData(&tcPayload); err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-
-	file, _, err := c.Request.FormFile("images")
-	if err == nil {
-		imageURL, err := co.imageUC.FirebaseUpload(file)
-		if err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// Create the image payload
-		imagePayload := model.Image{
-			ImageURL:  imageURL,
-			ContentID: payload.ID,
-		}
-		if err := co.imageUC.SaveData(&imagePayload); err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+	if err := co.useCase.SaveContent(&payload, tags, file); err != nil {
+		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	co.NewSuccessSingleResponse(c, "OK", payload)
@@ -219,62 +193,25 @@ func (co *ContentController) updateHandler(c *gin.Context) {
 	existingContent.Excerpt = excerpt
 	existingContent.CategoryID = categoryID
 
-	if err := co.useCase.UpdateData(existingContent); err != nil {
-		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	tagsString := c.Request.FormValue("tags")
 	var tags []string
-	if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
-		co.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
-		return
-	}
-
-	if len(tags) > 0 && len(existingContent.TagsContent) > 0 {
-		for _, tag := range existingContent.TagsContent {
-			if err := co.tagsContentUC.DeleteData(tag.ID); err != nil {
-				co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-	}
-	for _, v := range tags {
-		tcPayload := model.TagsContent{
-			TagID:     v,
-			ContentID: existingContent.ID,
-		}
-		if err := co.tagsContentUC.SaveData(&tcPayload); err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+	if tagsString != "" {
+		if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
+			co.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
 			return
 		}
+	} else {
+		tags = []string{}
 	}
 
 	file, _, err := c.Request.FormFile("images")
-	if err == nil {
-		if len(existingContent.Image) > 0 {
-			for _, v := range existingContent.Image {
-				if err := co.imageUC.DeleteData(v.ID); err != nil {
-					co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-					return
-				}
-			}
-		}
-		imageURL, err := co.imageUC.FirebaseUpload(file)
-		if err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+	if err != nil {
+		co.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
+	}
 
-		// Create the image payload
-		imagePayload := model.Image{
-			ImageURL:  imageURL,
-			ContentID: existingContent.ID,
-		}
-		if err := co.imageUC.SaveData(&imagePayload); err != nil {
-			co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+	if err := co.useCase.UpdateContent(existingContent, tags, file); err != nil {
+		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	co.NewSuccessSingleResponse(c, "OK", existingContent)

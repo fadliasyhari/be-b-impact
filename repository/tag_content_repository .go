@@ -14,6 +14,8 @@ type TagsContentRepository interface {
 	BaseRepository[model.TagsContent]
 	BaseRepositoryCount[model.TagsContent]
 	BaseRepositoryPaging[model.TagsContent]
+	SaveTrx(payload *model.TagsContent, tx *gorm.DB) error
+	DeleteTrx(id string, tx *gorm.DB) error
 }
 type tagsContentRepository struct {
 	db *gorm.DB
@@ -21,6 +23,10 @@ type tagsContentRepository struct {
 
 func (tc *tagsContentRepository) Delete(id string) error {
 	return tc.db.Delete(&model.TagsContent{}, "id=?", id).Error
+}
+
+func (tc *tagsContentRepository) DeleteTrx(id string, tx *gorm.DB) error {
+	return tx.Delete(&model.TagsContent{}, "id=?", id).Error
 }
 
 func (tc *tagsContentRepository) Get(id string) (*model.TagsContent, error) {
@@ -43,6 +49,16 @@ func (tc *tagsContentRepository) List() ([]model.TagsContent, error) {
 
 func (tc *tagsContentRepository) Save(payload *model.TagsContent) error {
 	return tc.db.Save(payload).Error
+}
+
+func (r *tagsContentRepository) SaveTrx(payload *model.TagsContent, tx *gorm.DB) error {
+	// If the provided transaction is not nil, use it for saving the TagsContent
+	if tx != nil {
+		return tx.Create(payload).Error
+	}
+
+	// Otherwise, use the default DB connection for saving the TagsContent
+	return r.db.Create(payload).Error
 }
 
 func (tc *tagsContentRepository) Update(payload *model.TagsContent) error {

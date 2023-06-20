@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"mime/multipart"
 
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
@@ -11,10 +12,19 @@ import (
 type ContentUseCase interface {
 	BaseUseCase[model.Content]
 	BaseUseCasePaging[model.Content]
+	SaveContent(payload *model.Content, tags []string, file multipart.File) error
+	UpdateContent(payload *model.Content, tags []string, file multipart.File) error
 }
 
 type contentUseCase struct {
-	repo repository.ContentRepository
+	repo          repository.ContentRepository
+	tagsContentUC TagsContentUseCase
+	imageUC       ImageUseCase
+}
+
+// SaveData implements ContentUseCase.
+func (*contentUseCase) SaveData(payload *model.Content) error {
+	panic("unimplemented")
 }
 
 func (co *contentUseCase) DeleteData(id string) error {
@@ -37,14 +47,57 @@ func (co *contentUseCase) FindById(id string) (*model.Content, error) {
 	return content, nil
 }
 
-func (co *contentUseCase) SaveData(payload *model.Content) error {
+func (co *contentUseCase) SaveContent(payload *model.Content, tags []string, file multipart.File) error {
 	// err := payload.Vaildate()
 	// if err != nil {
 	// 	return err
 	// }
 	// cek jika data sudah ada -> count > 0
+	tx := co.repo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-	return co.repo.Save(payload)
+	if err := co.repo.Save(payload); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, v := range tags {
+		tcPayload := model.TagsContent{
+			TagID:     v,
+			ContentID: payload.ID,
+		}
+		if err := co.tagsContentUC.SaveTagsContent(&tcPayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	imageURL, err := co.imageUC.FirebaseUpload(file)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Create the image payload
+	imagePayload := model.Image{
+		ImageURL:  imageURL,
+		ContentID: payload.ID,
+	}
+	if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func (co *contentUseCase) UpdateData(payload *model.Content) error {
@@ -53,14 +106,110 @@ func (co *contentUseCase) UpdateData(payload *model.Content) error {
 	// 	return err
 	// }
 	// cek jika data sudah ada -> count > 0
-
 	if payload.ID != "" {
 		_, err := co.FindById(payload.ID)
 		if err != nil {
 			return fmt.Errorf("content with ID %s not found", payload.ID)
 		}
 	}
+
 	return co.repo.Update(payload)
+}
+
+func (co *contentUseCase) UpdateContent(payload *model.Content, tags []string, file multipart.File) error {
+	// err := payload.Vaildate()
+	// if err != nil {
+	// 	return err
+	// }
+	// cek jika data sudah ada -> count > 0
+	if payload.ID != "" {
+		_, err := co.FindById(payload.ID)
+		if err != nil {
+			return fmt.Errorf("content with ID %s not found", payload.ID)
+		}
+	}
+
+	tx := co.repo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := co.repo.Update(payload); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, tag := range payload.TagsContent {
+		if !contains(tags, tag.ID) {
+			if err := co.tagsContentUC.DeleteDataTrx(tag.ID, tx); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	for _, tagId := range tags {
+		found := false
+		for _, tag := range payload.TagsContent {
+			if tag.ID == tagId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			tcPayload := model.TagsContent{
+				TagID:     tagId,
+				ContentID: payload.ID,
+			}
+			if err := co.tagsContentUC.SaveTagsContent(&tcPayload, tx); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	if len(payload.Image) > 0 {
+		for _, v := range payload.Image {
+			if err := co.imageUC.DeleteDataTrx(v.ID, tx); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	imageURL, err := co.imageUC.FirebaseUpload(file)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Create the image payload
+	imagePayload := model.Image{
+		ImageURL:  imageURL,
+		ContentID: payload.ID,
+	}
+	if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func contains(slice []string, element string) bool {
+	for _, e := range slice {
+		if e == element {
+			return true
+		}
+	}
+	return false
 }
 
 func (co *contentUseCase) SearchBy(by map[string]interface{}) ([]model.Content, error) {
@@ -78,6 +227,10 @@ func (co *contentUseCase) Pagination(requestQueryParams dto.RequestQueryParams) 
 	return co.repo.Paging(requestQueryParams)
 }
 
-func NewContentUseCase(repo repository.ContentRepository) ContentUseCase {
-	return &contentUseCase{repo: repo}
+func NewContentUseCase(repo repository.ContentRepository, tagsContentUC TagsContentUseCase, imageUC ImageUseCase) ContentUseCase {
+	return &contentUseCase{
+		repo:          repo,
+		tagsContentUC: tagsContentUC,
+		imageUC:       imageUC,
+	}
 }

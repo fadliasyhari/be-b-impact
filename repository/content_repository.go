@@ -18,6 +18,7 @@ type ContentRepository interface {
 }
 type contentRepository struct {
 	db *gorm.DB
+	tx *gorm.DB
 }
 
 func (co *contentRepository) Delete(id string) error {
@@ -43,11 +44,12 @@ func (co *contentRepository) List() ([]model.Content, error) {
 }
 
 func (co *contentRepository) BeginTransaction() *gorm.DB {
-	return co.db.Begin()
+	co.tx = co.db.Begin()
+	return co.tx
 }
 
 func (co *contentRepository) Save(payload *model.Content) error {
-	return co.db.Save(payload).Error
+	return co.tx.Save(payload).Error
 }
 
 func (co *contentRepository) Update(payload *model.Content) error {
@@ -90,7 +92,7 @@ func (co *contentRepository) Update(payload *model.Content) error {
 		updateFields["excerpt"] = payload.Excerpt
 	}
 
-	return co.db.Model(&model.Content{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+	return co.tx.Model(&model.Content{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
 func (co *contentRepository) Search(by map[string]interface{}) ([]model.Content, error) {

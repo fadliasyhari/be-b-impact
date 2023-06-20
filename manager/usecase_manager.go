@@ -58,7 +58,7 @@ func (u *useCaseManager) ImageUseCase() usecase.ImageUseCase {
 
 // ContentUseCase implements UseCaseManager
 func (u *useCaseManager) ContentUseCase() usecase.ContentUseCase {
-	return usecase.NewContentUseCase(u.repoManger.ContentRepo())
+	return usecase.NewContentUseCase(u.repoManger.ContentRepo(), u.TagsContentUseCase(), u.ImageUseCase())
 }
 
 // TagUseCase implements UseCaseManager

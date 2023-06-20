@@ -6,11 +6,14 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/repository"
+	"gorm.io/gorm"
 )
 
 type TagsContentUseCase interface {
 	BaseUseCase[model.TagsContent]
 	BaseUseCasePaging[model.TagsContent]
+	SaveTagsContent(payload *model.TagsContent, tx *gorm.DB) error
+	DeleteDataTrx(id string, tx *gorm.DB) error
 }
 
 type tagsContentUseCase struct {
@@ -23,6 +26,14 @@ func (tc *tagsContentUseCase) DeleteData(id string) error {
 		return fmt.Errorf("tagsContent with ID %s not found", id)
 	}
 	return tc.repo.Delete(tagsContent.ID)
+}
+
+func (tc *tagsContentUseCase) DeleteDataTrx(id string, tx *gorm.DB) error {
+	tagsContent, err := tc.FindById(id)
+	if err != nil {
+		return fmt.Errorf("tagsContent with ID %s not found", id)
+	}
+	return tc.repo.DeleteTrx(tagsContent.ID, tx)
 }
 
 func (tc *tagsContentUseCase) FindAll() ([]model.TagsContent, error) {
@@ -51,6 +62,14 @@ func (tc *tagsContentUseCase) SaveData(payload *model.TagsContent) error {
 		}
 	}
 	return tc.repo.Save(payload)
+}
+
+func (tc *tagsContentUseCase) SaveTagsContent(payload *model.TagsContent, tx *gorm.DB) error {
+	// Save the TagsContent using the provided transaction
+	if err := tc.repo.SaveTrx(payload, tx); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (tc *tagsContentUseCase) UpdateData(payload *model.TagsContent) error {

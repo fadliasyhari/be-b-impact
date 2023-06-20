@@ -22,6 +22,8 @@ type ImageRepository interface {
 	BaseRepositoryCount[model.Image]
 	BaseRepositoryPaging[model.Image]
 	FirebaseSave(payload multipart.File) (string, error)
+	SaveTrx(payload *model.Image, tx *gorm.DB) error
+	DeleteTrx(id string, tx *gorm.DB) error
 }
 type imageRepository struct {
 	db *gorm.DB
@@ -30,6 +32,10 @@ type imageRepository struct {
 
 func (im *imageRepository) Delete(id string) error {
 	return im.db.Delete(&model.Image{}, "id=?", id).Error
+}
+
+func (im *imageRepository) DeleteTrx(id string, tx *gorm.DB) error {
+	return tx.Delete(&model.Image{}, "id=?", id).Error
 }
 
 func (im *imageRepository) Get(id string) (*model.Image, error) {
@@ -103,6 +109,16 @@ func generateUniqueImagename() string {
 
 func (im *imageRepository) Save(payload *model.Image) error {
 	return im.db.Save(payload).Error
+}
+
+func (r *imageRepository) SaveTrx(payload *model.Image, tx *gorm.DB) error {
+	// If the provided transaction is not nil, use it for saving the Image
+	if tx != nil {
+		return tx.Create(payload).Error
+	}
+
+	// Otherwise, use the default DB connection for saving the Image
+	return r.db.Create(payload).Error
 }
 
 func (im *imageRepository) Update(payload *model.Image) error {
