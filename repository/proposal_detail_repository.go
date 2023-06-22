@@ -14,6 +14,8 @@ type ProposalDetailRepository interface {
 	BaseRepository[model.ProposalDetail]
 	BaseRepositoryCount[model.ProposalDetail]
 	BaseRepositoryPaging[model.ProposalDetail]
+	SaveTrx(payload *model.ProposalDetail, tx *gorm.DB) error
+	UpdateTrx(payload *model.ProposalDetail, tx *gorm.DB) error
 }
 type proposalDetailRepository struct {
 	db *gorm.DB
@@ -45,6 +47,11 @@ func (pd *proposalDetailRepository) Save(payload *model.ProposalDetail) error {
 	return pd.db.Save(payload).Error
 }
 
+func (pd *proposalDetailRepository) SaveTrx(payload *model.ProposalDetail, tx *gorm.DB) error {
+
+	return tx.Create(payload).Error
+}
+
 func (pd *proposalDetailRepository) Update(payload *model.ProposalDetail) error {
 	updateFields := make(map[string]interface{})
 
@@ -53,7 +60,7 @@ func (pd *proposalDetailRepository) Update(payload *model.ProposalDetail) error 
 		updateFields["project_name"] = payload.ProjectName
 	}
 
-	if payload.PartnershipTypeID != "" {
+	if payload.PartnershipTypeID != nil {
 		updateFields["partnership_type_id"] = payload.PartnershipTypeID
 	}
 
@@ -73,7 +80,46 @@ func (pd *proposalDetailRepository) Update(payload *model.ProposalDetail) error 
 		updateFields["alignment"] = payload.Alignment
 	}
 
+	if payload.AccountableReport != "" {
+		updateFields["accountable_report"] = payload.AccountableReport
+	}
+
 	return pd.db.Model(&model.ProposalDetail{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+}
+
+func (pd *proposalDetailRepository) UpdateTrx(payload *model.ProposalDetail, tx *gorm.DB) error {
+	updateFields := make(map[string]interface{})
+
+	// Add fields to be updated based on the payload
+	if payload.ProjectName != "" {
+		updateFields["project_name"] = payload.ProjectName
+	}
+
+	if payload.PartnershipTypeID != nil {
+		updateFields["partnership_type_id"] = payload.PartnershipTypeID
+	}
+
+	if !payload.StartDate.IsZero() {
+		updateFields["start_date"] = payload.StartDate
+	}
+
+	if !payload.EndDate.IsZero() {
+		updateFields["end_date"] = payload.EndDate
+	}
+
+	if payload.Objective != "" {
+		updateFields["objective"] = payload.Objective
+	}
+
+	if payload.Alignment != "" {
+		updateFields["alignment"] = payload.Alignment
+	}
+
+	if payload.AccountableReport != "" {
+		updateFields["accountable_report"] = payload.AccountableReport
+	}
+
+	return tx.Model(&model.ProposalDetail{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
 func (pd *proposalDetailRepository) Search(by map[string]interface{}) ([]model.ProposalDetail, error) {

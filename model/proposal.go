@@ -7,7 +7,7 @@ import (
 type Proposal struct {
 	BaseModel
 	OrgName            string             `gorm:"varchar" json:"org_name"`
-	OrganizationTypeID string             `json:"organization_type_id"` // org type refer to category which useFor organization
+	OrganizationTypeID *string            `json:"organization_type_id"` // org type refer to category which useFor organization
 	OrganizatonType    Category           `json:"organization_type,omitempty" gorm:"foreignKey:OrganizationTypeID"`
 	Email              string             `gorm:"varchar" json:"email"`
 	Phone              string             `gorm:"varchar" json:"phone"`

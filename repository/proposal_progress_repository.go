@@ -14,6 +14,7 @@ type ProposalProgressRepository interface {
 	BaseRepository[model.ProposalProgress]
 	BaseRepositoryCount[model.ProposalProgress]
 	BaseRepositoryPaging[model.ProposalProgress]
+	SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error
 }
 type proposalProgressRepository struct {
 	db *gorm.DB
@@ -43,6 +44,10 @@ func (pp *proposalProgressRepository) List() ([]model.ProposalProgress, error) {
 
 func (pp *proposalProgressRepository) Save(payload *model.ProposalProgress) error {
 	return pp.db.Save(payload).Error
+}
+
+func (pp *proposalProgressRepository) SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error {
+	return tx.Create(payload).Error
 }
 
 func (pp *proposalProgressRepository) Update(payload *model.ProposalProgress) error {

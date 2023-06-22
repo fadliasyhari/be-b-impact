@@ -16,10 +16,8 @@ import (
 )
 
 type ContentController struct {
-	router        *gin.Engine
-	useCase       usecase.ContentUseCase
-	imageUC       usecase.ImageUseCase
-	tagsContentUC usecase.TagsContentUseCase
+	router  *gin.Engine
+	useCase usecase.ContentUseCase
 	api.BaseApi
 }
 
@@ -232,12 +230,10 @@ func (co *ContentController) deleteHandler(c *gin.Context) {
 	c.String(http.StatusNoContent, "Success Delete")
 }
 
-func NewContentController(r *gin.Engine, useCase usecase.ContentUseCase, imageUC usecase.ImageUseCase, tagsContentUC usecase.TagsContentUseCase, tokenMdw middleware.AuthTokenMiddlerware) *ContentController {
+func NewContentController(r *gin.Engine, useCase usecase.ContentUseCase, tokenMdw middleware.AuthTokenMiddlerware) *ContentController {
 	controller := &ContentController{
-		router:        r,
-		useCase:       useCase,
-		imageUC:       imageUC,
-		tagsContentUC: tagsContentUC,
+		router:  r,
+		useCase: useCase,
 	}
 	contentGroup := r.Group("/content")
 	{

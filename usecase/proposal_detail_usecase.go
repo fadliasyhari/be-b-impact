@@ -6,11 +6,14 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/repository"
+	"gorm.io/gorm"
 )
 
 type ProposalDetailUseCase interface {
 	BaseUseCase[model.ProposalDetail]
 	BaseUseCasePaging[model.ProposalDetail]
+	SavePropoDetail(payload *model.ProposalDetail, tx *gorm.DB) error
+	UpdatePropoDetail(payload *model.ProposalDetail, tx *gorm.DB) error
 }
 
 type proposalDetailUseCase struct {
@@ -51,6 +54,24 @@ func (pd *proposalDetailUseCase) SaveData(payload *model.ProposalDetail) error {
 		}
 	}
 	return pd.repo.Save(payload)
+}
+
+func (pd *proposalDetailUseCase) SavePropoDetail(payload *model.ProposalDetail, tx *gorm.DB) error {
+	// err := payload.Vaildate()
+	// if err != nil {
+	// 	return err
+	// }
+
+	return pd.repo.SaveTrx(payload, tx)
+}
+
+func (pd *proposalDetailUseCase) UpdatePropoDetail(payload *model.ProposalDetail, tx *gorm.DB) error {
+	// err := payload.Vaildate()
+	// if err != nil {
+	// 	return err
+	// }
+
+	return pd.repo.UpdateTrx(payload, tx)
 }
 
 func (pd *proposalDetailUseCase) UpdateData(payload *model.ProposalDetail) error {

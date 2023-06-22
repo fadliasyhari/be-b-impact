@@ -6,11 +6,13 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/repository"
+	"gorm.io/gorm"
 )
 
 type ProposalProgressUseCase interface {
 	BaseUseCase[model.ProposalProgress]
 	BaseUseCasePaging[model.ProposalProgress]
+	SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error
 }
 
 type proposalProgressUseCase struct {
@@ -42,15 +44,15 @@ func (pp *proposalProgressUseCase) SaveData(payload *model.ProposalProgress) err
 	// if err != nil {
 	// 	return err
 	// }
-	// cek jika data sudah ada -> count > 0
-
-	if payload.ID != "" {
-		_, err := pp.FindById(payload.ID)
-		if err != nil {
-			return fmt.Errorf("proposalProgress with ID %s not found", payload.ID)
-		}
-	}
 	return pp.repo.Save(payload)
+}
+
+func (pp *proposalProgressUseCase) SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error {
+	// err := payload.Vaildate()
+	// if err != nil {
+	// 	return err
+	// }
+	return pp.repo.SaveTrx(payload, tx)
 }
 
 func (pp *proposalProgressUseCase) UpdateData(payload *model.ProposalProgress) error {

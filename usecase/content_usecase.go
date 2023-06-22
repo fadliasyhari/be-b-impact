@@ -52,7 +52,7 @@ func (co *contentUseCase) SaveContent(payload *model.Content, tags []string, fil
 	// if err != nil {
 	// 	return err
 	// }
-	// cek jika data sudah ada -> count > 0
+
 	tx := co.repo.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
@@ -121,7 +121,7 @@ func (co *contentUseCase) UpdateContent(payload *model.Content, tags []string, f
 	// if err != nil {
 	// 	return err
 	// }
-	// cek jika data sudah ada -> count > 0
+
 	if payload.ID != "" {
 		_, err := co.FindById(payload.ID)
 		if err != nil {

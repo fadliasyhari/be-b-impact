@@ -22,6 +22,8 @@ type FileRepository interface {
 	BaseRepositoryCount[model.File]
 	BaseRepositoryPaging[model.File]
 	FirebaseSave(payload multipart.File) (string, error)
+	SaveTrx(payload *model.File, tx *gorm.DB) error
+	DeleteTrx(id string, tx *gorm.DB) error
 }
 type fileRepository struct {
 	db *gorm.DB
@@ -30,6 +32,10 @@ type fileRepository struct {
 
 func (fi *fileRepository) Delete(id string) error {
 	return fi.db.Delete(&model.File{}, "id=?", id).Error
+}
+
+func (fi *fileRepository) DeleteTrx(id string, tx *gorm.DB) error {
+	return tx.Delete(&model.File{}, "id=?", id).Error
 }
 
 func (fi *fileRepository) Get(id string) (*model.File, error) {
@@ -103,6 +109,10 @@ func generateUniqueFilename() string {
 
 func (fi *fileRepository) Save(payload *model.File) error {
 	return fi.db.Save(payload).Error
+}
+
+func (fi *fileRepository) SaveTrx(payload *model.File, tx *gorm.DB) error {
+	return tx.Create(payload).Error
 }
 
 func (fi *fileRepository) Update(payload *model.File) error {

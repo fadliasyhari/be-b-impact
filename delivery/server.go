@@ -33,7 +33,7 @@ func (s *Server) initController() {
 	controller.NewAuthController(s.engine, s.ucManager.UsersUseCase(), s.authUseCase)
 	controller.NewCategoryController(s.engine, s.ucManager.CategoryUseCase(), tokenMdw)
 	controller.NewTagController(s.engine, s.ucManager.TagUseCase(), tokenMdw)
-	controller.NewContentController(s.engine, s.ucManager.ContentUseCase(), s.ucManager.ImageUseCase(), s.ucManager.TagsContentUseCase(), tokenMdw)
+	controller.NewContentController(s.engine, s.ucManager.ContentUseCase(), tokenMdw)
 	controller.NewProposalController(s.engine, s.ucManager.ProposalUseCase(), s.ucManager.ProposalDetailUseCase(), s.ucManager.FileUseCase(), s.ucManager.ProgressUseCase(), s.ucManager.ProposalProgressUseCase(), s.ucManager.UsersUseCase(), tokenMdw)
 	controller.NewProgressController(s.engine, s.ucManager.ProgressUseCase(), tokenMdw)
 }

@@ -7,12 +7,15 @@ import (
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
 	"be-b-impact.com/csr/repository"
+	"gorm.io/gorm"
 )
 
 type FileUseCase interface {
 	BaseUseCase[model.File]
 	BaseUseCasePaging[model.File]
 	FirebaseUpload(file multipart.File) (string, error)
+	SaveTrx(payload *model.File, tx *gorm.DB) error
+	DeleteDataTrx(id string, tx *gorm.DB) error
 }
 
 type fileUseCase struct {
@@ -25,6 +28,14 @@ func (fi *fileUseCase) DeleteData(id string) error {
 		return fmt.Errorf("file with ID %s not found", id)
 	}
 	return fi.repo.Delete(file.ID)
+}
+
+func (fi *fileUseCase) DeleteDataTrx(id string, tx *gorm.DB) error {
+	file, err := fi.FindById(id)
+	if err != nil {
+		return fmt.Errorf("file with ID %s not found", id)
+	}
+	return fi.repo.DeleteTrx(file.ID, tx)
 }
 
 func (fi *fileUseCase) FindAll() ([]model.File, error) {
@@ -49,6 +60,14 @@ func (fi *fileUseCase) SaveData(payload *model.File) error {
 	// 	return err
 	// }
 	return fi.repo.Save(payload)
+}
+
+func (fi *fileUseCase) SaveTrx(payload *model.File, tx *gorm.DB) error {
+	// err := payload.Vaildate()
+	// if err != nil {
+	// 	return err
+	// }
+	return fi.repo.SaveTrx(payload, tx)
 }
 
 func (fi *fileUseCase) UpdateData(payload *model.File) error {

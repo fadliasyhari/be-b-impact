@@ -35,188 +35,107 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 		return
 	}
 
+	var proposalPayload model.Proposal
+
 	// Get the form values
 	orgName := c.Request.FormValue("org_name")
+	if orgName != "" {
+		proposalPayload.OrgName = orgName
+	}
+
 	orgTypeID := c.Request.FormValue("org_type_id")
+	if orgTypeID != "" {
+		proposalPayload.OrganizationTypeID = &orgTypeID
+	}
+
 	email := c.Request.FormValue("email")
+	if email != "" {
+		proposalPayload.Email = email
+	}
+
 	phone := c.Request.FormValue("phone")
+	if phone != "" {
+		proposalPayload.Phone = phone
+	}
+
 	picName := c.Request.FormValue("pic_name")
+	if picName != "" {
+		proposalPayload.PICName = picName
+	}
+
 	city := c.Request.FormValue("city")
+	if city != "" {
+		proposalPayload.City = city
+	}
+
 	postalCode := c.Request.FormValue("postal_code")
+	if postalCode != "" {
+		proposalPayload.PostalCode = postalCode
+	}
+
 	address := c.Request.FormValue("address")
+	if address != "" {
+		proposalPayload.Address = address
+	}
+
 	description := c.Request.FormValue("description")
+	if description != "" {
+		proposalPayload.Description = description
+	}
+
 	status := c.Request.FormValue("status")
-
-	// Create the proposal payload
-	proposalPayload := model.Proposal{
-		OrgName:            orgName,
-		OrganizationTypeID: orgTypeID,
-		Email:              email,
-		Phone:              phone,
-		PICName:            picName,
-		City:               city,
-		PostalCode:         postalCode,
-		Address:            address,
-		Description:        description,
-		Status:             status,
-		CreatedBy:          userTyped.UserId,
+	if status != "" {
+		proposalPayload.Status = status
 	}
 
-	if err := pr.useCase.SaveData(&proposalPayload); err != nil {
-		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
+	proposalPayload.CreatedBy = userTyped.UserId
+
+	// proposal Detail
+	var proposalDetail model.ProposalDetail
 
 	projectName := c.Request.FormValue("project_name")
+	if projectName != "" {
+		proposalDetail.ProjectName = projectName
+	}
+
 	partTypeID := c.Request.FormValue("part_type_id")
+	if partTypeID != "" {
+		proposalDetail.PartnershipTypeID = &partTypeID
+	}
 	startDateStr := c.Request.FormValue("start_date")
+	if startDateStr != "" {
+		startDateParse, err := time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, "failed to parse start date")
+			return
+		}
+		proposalDetail.StartDate = startDateParse
+	}
 	endDateStr := c.Request.FormValue("end_date")
+	if endDateStr != "" {
+		endDateParse, err := time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, "failed to parse end date")
+			return
+		}
+		proposalDetail.EndDate = endDateParse
+	}
 	objective := c.Request.FormValue("objective")
+	if objective != "" {
+		proposalDetail.Objective = objective
+	}
+
 	alignment := c.Request.FormValue("alignment")
-
-	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil {
-		pr.NewFailedResponse(c, http.StatusBadRequest, "failed to parse start date")
-		return
+	if alignment != "" {
+		proposalDetail.Alignment = alignment
 	}
 
-	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil {
-		pr.NewFailedResponse(c, http.StatusBadRequest, "failed to parse end date")
-		return
-	}
+	org_profile, _, _ := c.Request.FormFile("org_profile")
+	propo_doc, _, _ := c.Request.FormFile("propo_doc")
 
-	// Create the proposal detail payload
-	proposalDetailPayload := model.ProposalDetail{
-		BaseModel:         model.BaseModel{},
-		ProposalID:        proposalPayload.ID,
-		ProjectName:       projectName,
-		PartnershipTypeID: partTypeID,
-		StartDate:         startDate,
-		EndDate:           endDate,
-		Objective:         objective,
-		Alignment:         alignment,
-	}
-
-	if err := pr.propoDetailUC.SaveData(&proposalDetailPayload); err != nil {
+	if err := pr.useCase.SavePropo(&proposalPayload, &proposalDetail, org_profile, propo_doc); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
-	}
-
-	org_profile, _, err := c.Request.FormFile("org_profile")
-	if err == nil {
-		fileUrl, err := pr.fileUC.FirebaseUpload(org_profile)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-		// Create the file payload
-		filePayload := model.File{
-			BaseModel:  model.BaseModel{},
-			Label:      "organization profile",
-			FileURL:    fileUrl,
-			ProposalID: proposalPayload.ID,
-		}
-		if err := pr.fileUC.SaveData(&filePayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-	}
-
-	propo_doc, _, err := c.Request.FormFile("propo_doc")
-	if err == nil {
-		fileUrl, err := pr.fileUC.FirebaseUpload(propo_doc)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// Create the file payload
-		filePayload := model.File{
-			BaseModel:  model.BaseModel{},
-			Label:      "proposal document",
-			FileURL:    fileUrl,
-			ProposalID: proposalPayload.ID,
-		}
-		if err := pr.fileUC.SaveData(&filePayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-	}
-
-	if proposalPayload.Status == "1" {
-
-		progressFilter := make(map[string]interface{})
-		progressFilter["label"] = "received"
-
-		progress, err := pr.progressUC.SearchBy(progressFilter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		propoProgressPayload := model.ProposalProgress{
-			ProposalID: proposalPayload.ID,
-			ProgressID: progress[0].ID,
-			Note:       progress[0].Name,
-			Status:     "1",
-		}
-
-		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		updateProposal := model.Proposal{
-			BaseModel:       model.BaseModel{ID: proposalPayload.ID},
-			CurrentProgress: propoProgressPayload.Note,
-		}
-
-		if err := pr.useCase.UpdateData(&updateProposal); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		progressFilter = make(map[string]interface{})
-		progressFilter["label"] = "review"
-
-		progress, err = pr.progressUC.SearchBy(progressFilter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		propoProgressPayload = model.ProposalProgress{
-			ProposalID: proposalPayload.ID,
-			ProgressID: progress[0].ID,
-			Note:       progress[0].Name,
-			Status:     "0",
-		}
-
-		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// assign least assigned admin as reviewer
-		filter := make(map[string]interface{})
-		filter["role"] = "admin"
-
-		admins, err := pr.userUC.SearchBy(filter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if len(admins) > 0 {
-			proposalPayload.ReviewerID = admins[0].ID
-			if err := pr.useCase.UpdateData(&proposalPayload); err != nil {
-				pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
 	}
 
 	pr.NewSuccessSingleResponse(c, "OK", proposalPayload)
@@ -329,7 +248,6 @@ func (pr *ProposalController) updateHandler(c *gin.Context) {
 
 	id := c.Request.FormValue("id")
 	orgName := c.Request.FormValue("org_name")
-	orgTypeID := c.Request.FormValue("org_type_id")
 	email := c.Request.FormValue("email")
 	phone := c.Request.FormValue("phone")
 	picName := c.Request.FormValue("pic_name")
@@ -352,8 +270,16 @@ func (pr *ProposalController) updateHandler(c *gin.Context) {
 		}
 	}
 
+	if existingProposal.Status == "1" {
+		pr.NewFailedResponse(c, http.StatusBadRequest, "proposal already been submitted")
+		return
+	}
+
 	existingProposal.OrgName = orgName
-	existingProposal.OrganizationTypeID = orgTypeID
+	orgTypeID := c.Request.FormValue("org_type_id")
+	if orgTypeID != "" {
+		existingProposal.OrganizationTypeID = &orgTypeID
+	}
 	existingProposal.Email = email
 	existingProposal.Phone = phone
 	existingProposal.PICName = picName
@@ -363,10 +289,7 @@ func (pr *ProposalController) updateHandler(c *gin.Context) {
 	existingProposal.Description = description
 	existingProposal.Status = status
 
-	if err := pr.useCase.UpdateData(existingProposal); err != nil {
-		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
+	var proposalDetailPayload model.ProposalDetail
 
 	projectName := c.Request.FormValue("project_name")
 	partTypeID := c.Request.FormValue("part_type_id")
@@ -397,157 +320,27 @@ func (pr *ProposalController) updateHandler(c *gin.Context) {
 	}
 
 	// Create the proposal detail payload
-	proposalDetailPayload := model.ProposalDetail{
+	proposalDetailPayload = model.ProposalDetail{
 		BaseModel: model.BaseModel{
 			ID: proposalDetail[0].ID,
 		},
-		ProjectName:       projectName,
-		PartnershipTypeID: partTypeID,
-		StartDate:         startDate,
-		EndDate:           endDate,
-		Objective:         objective,
-		Alignment:         alignment,
+		ProjectName: projectName,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		Objective:   objective,
+		Alignment:   alignment,
 	}
 
-	if err := pr.propoDetailUC.UpdateData(&proposalDetailPayload); err != nil {
+	if partTypeID != "" {
+		proposalDetailPayload.PartnershipTypeID = &partTypeID
+	}
+
+	org_profile, _, _ := c.Request.FormFile("org_profile")
+	propo_doc, _, _ := c.Request.FormFile("propo_doc")
+
+	if err := pr.useCase.UpdatePropo(existingProposal, &proposalDetailPayload, org_profile, propo_doc); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
-	}
-
-	org_profile, _, err := c.Request.FormFile("org_profile")
-	if err == nil {
-		if len(existingProposal.File) > 0 {
-			for _, v := range existingProposal.File {
-				if v.Label == "organization profile" {
-					if err := pr.fileUC.DeleteData(v.ID); err != nil {
-						pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-						return
-					}
-				}
-			}
-		}
-		fileUrl, err := pr.fileUC.FirebaseUpload(org_profile)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-		// Create the file payload
-		filePayload := model.File{
-			BaseModel:  model.BaseModel{},
-			Label:      "organization profile",
-			FileURL:    fileUrl,
-			ProposalID: existingProposal.ID,
-		}
-		if err := pr.fileUC.SaveData(&filePayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-	}
-
-	propo_doc, _, err := c.Request.FormFile("propo_doc")
-	if err == nil {
-		if len(existingProposal.File) > 0 {
-			for _, v := range existingProposal.File {
-				if v.Label == "proposal document" {
-					if err := pr.fileUC.DeleteData(v.ID); err != nil {
-						pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-						return
-					}
-				}
-			}
-		}
-		fileUrl, err := pr.fileUC.FirebaseUpload(propo_doc)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// Create the file payload
-		filePayload := model.File{
-			BaseModel:  model.BaseModel{},
-			Label:      "proposal document",
-			FileURL:    fileUrl,
-			ProposalID: existingProposal.ID,
-		}
-		if err := pr.fileUC.SaveData(&filePayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-	}
-
-	if existingProposal.Status == "1" {
-
-		progressFilter := make(map[string]interface{})
-		progressFilter["label"] = "received"
-
-		progress, err := pr.progressUC.SearchBy(progressFilter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		propoProgressPayload := model.ProposalProgress{
-			ProposalID: existingProposal.ID,
-			ProgressID: progress[0].ID,
-			Note:       progress[0].Name,
-			Status:     "1",
-		}
-
-		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		updateProposal := model.Proposal{
-			BaseModel:       model.BaseModel{ID: existingProposal.ID},
-			CurrentProgress: propoProgressPayload.Note,
-		}
-
-		if err := pr.useCase.UpdateData(&updateProposal); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		progressFilter = make(map[string]interface{})
-		progressFilter["label"] = "review"
-
-		progress, err = pr.progressUC.SearchBy(progressFilter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		propoProgressPayload = model.ProposalProgress{
-			ProposalID: existingProposal.ID,
-			ProgressID: progress[0].ID,
-			Note:       progress[0].Name,
-			Status:     "0",
-		}
-
-		if err := pr.propoProgressUC.SaveData(&propoProgressPayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// assign least assigned admin as reviewer
-		filter := make(map[string]interface{})
-		filter["role"] = "admin"
-
-		admins, err := pr.userUC.SearchBy(filter)
-		if err != nil {
-			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if len(admins) > 0 {
-			existingProposal.ReviewerID = admins[0].ID
-			if err := pr.useCase.UpdateData(existingProposal); err != nil {
-				pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
 	}
 
 	pr.NewSuccessSingleResponse(c, "OK", existingProposal)
@@ -935,6 +728,37 @@ func (pr *ProposalController) uploadFileHandler(c *gin.Context) {
 	}
 }
 
+func (pr *ProposalController) reportHandler(c *gin.Context) {
+	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
+
+	var payload model.ProposalDetail
+	if err := pr.ParseRequestBody(c, &payload); err != nil {
+		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	proposal, err := pr.useCase.FindById(payload.ProposalID)
+	if err != nil {
+		pr.NewFailedResponse(c, http.StatusNotFound, err.Error())
+		return
+	}
+
+	payload.ID = proposal.ProposalDetail.ID
+
+	if proposal.CreatedBy != userTyped.UserId || proposal.Status != "1" {
+		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
+		return
+	}
+
+	if err := pr.propoDetailUC.UpdateData(&payload); err != nil {
+		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	pr.NewSuccessSingleResponse(c, "OK", payload)
+
+}
+
 func NewProposalController(r *gin.Engine, useCase usecase.ProposalUseCase, propoDetailUC usecase.ProposalDetailUseCase, fileUC usecase.FileUseCase, progressUC usecase.ProgressUseCase, propoProgressUC usecase.ProposalProgressUseCase, userUC usecase.UsersUseCase, tokenMdw middleware.AuthTokenMiddlerware) *ProposalController {
 	controller := &ProposalController{
 		router:          r,
@@ -954,6 +778,7 @@ func NewProposalController(r *gin.Engine, useCase usecase.ProposalUseCase, propo
 		proposalGroup.POST("/progress", controller.createProgressHandler)
 		proposalGroup.PUT("/progress", controller.updateProgressHandler)
 		proposalGroup.POST("/file", controller.uploadFileHandler)
+		proposalGroup.POST("/report", controller.reportHandler)
 		proposalGroup.PUT("", controller.updateHandler)
 		proposalGroup.DELETE("/:id", controller.deleteHandler)
 	}

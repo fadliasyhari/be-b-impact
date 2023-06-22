@@ -15,8 +15,12 @@ type ProposalRepository interface {
 	BaseRepositoryCount[model.Proposal]
 	BaseRepositoryPaging[model.Proposal]
 	GetByID(id string) (*dto.Proposal, error)
+	BeginTransaction() *gorm.DB
+	UpdateMinor(payload *model.Proposal, tx *gorm.DB) error
+	GetTx(id string, tx *gorm.DB) (*model.Proposal, error)
 }
 type proposalRepository struct {
+	tx *gorm.DB
 	db *gorm.DB
 }
 
@@ -42,6 +46,15 @@ func (pr *proposalRepository) Get(id string) (*model.Proposal, error) {
 	return &proposal, nil
 }
 
+func (pr *proposalRepository) GetTx(id string, tx *gorm.DB) (*model.Proposal, error) {
+	var proposal model.Proposal
+	result := tx.Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
+	if result != nil {
+		return nil, result
+	}
+	return &proposal, nil
+}
+
 func (pr *proposalRepository) List() ([]model.Proposal, error) {
 	var proposal []model.Proposal
 	result := pr.db.Find(&proposal).Error
@@ -51,8 +64,13 @@ func (pr *proposalRepository) List() ([]model.Proposal, error) {
 	return proposal, nil
 }
 
+func (pr *proposalRepository) BeginTransaction() *gorm.DB {
+	pr.tx = pr.db.Begin()
+	return pr.tx
+}
+
 func (pr *proposalRepository) Save(payload *model.Proposal) error {
-	return pr.db.Save(payload).Error
+	return pr.tx.Create(payload).Error
 }
 
 func (pr *proposalRepository) Update(payload *model.Proposal) error {
@@ -63,7 +81,7 @@ func (pr *proposalRepository) Update(payload *model.Proposal) error {
 		updateFields["org_name"] = payload.OrgName
 	}
 
-	if payload.OrganizationTypeID != "" {
+	if payload.OrganizationTypeID != nil {
 		updateFields["organization_type_id"] = payload.OrganizationTypeID
 	}
 
@@ -111,7 +129,66 @@ func (pr *proposalRepository) Update(payload *model.Proposal) error {
 		updateFields["current_progress"] = payload.CurrentProgress
 	}
 
-	return pr.db.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+	return pr.tx.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+}
+
+func (pr *proposalRepository) UpdateMinor(payload *model.Proposal, tx *gorm.DB) error {
+	updateFields := make(map[string]interface{})
+
+	// Add fields to be updated based on the payload
+	if payload.OrgName != "" {
+		updateFields["org_name"] = payload.OrgName
+	}
+
+	if payload.OrganizationTypeID != nil {
+		updateFields["organization_type_id"] = payload.OrganizationTypeID
+	}
+
+	if payload.Email != "" {
+		updateFields["email"] = payload.Email
+	}
+
+	if payload.Phone != "" {
+		updateFields["phone"] = payload.Phone
+	}
+
+	if payload.PICName != "" {
+		updateFields["pic_name"] = payload.PICName
+	}
+
+	if payload.City != "" {
+		updateFields["city"] = payload.City
+	}
+
+	if payload.PostalCode != "" {
+		updateFields["postal_code"] = payload.PostalCode
+	}
+
+	if payload.Address != "" {
+		updateFields["address"] = payload.Address
+	}
+
+	if payload.Description != "" {
+		updateFields["description"] = payload.Description
+	}
+
+	if payload.Status != "" {
+		updateFields["status"] = payload.Status
+	}
+
+	if payload.DeletedBy != "" {
+		updateFields["deleted_by"] = payload.DeletedBy
+	}
+
+	if payload.ReviewerID != "" {
+		updateFields["reviewer_id"] = payload.ReviewerID
+	}
+
+	if payload.CurrentProgress != "" {
+		updateFields["current_progress"] = payload.CurrentProgress
+	}
+
+	return tx.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
 func (pr *proposalRepository) Search(by map[string]interface{}) ([]model.Proposal, error) {
