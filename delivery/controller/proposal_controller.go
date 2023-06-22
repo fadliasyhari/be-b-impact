@@ -731,7 +731,12 @@ func (pr *ProposalController) uploadFileHandler(c *gin.Context) {
 func (pr *ProposalController) reportHandler(c *gin.Context) {
 	userTyped := utils.AccessInsideToken(pr.BaseApi, c)
 
-	var payload model.ProposalDetail
+	type ReportRequest struct {
+		ProposalID         string `json:"proposal_id"`
+		AccountableReport  string `json:"accountable_report"`
+		ProposalProgressID string `json:"proposal_progress_id"`
+	}
+	var payload ReportRequest
 	if err := pr.ParseRequestBody(c, &payload); err != nil {
 		pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
@@ -743,14 +748,38 @@ func (pr *ProposalController) reportHandler(c *gin.Context) {
 		return
 	}
 
-	payload.ID = proposal.ProposalDetail.ID
+	var propoDetail model.ProposalDetail
+	propoDetail.ID = proposal.ProposalDetail.ID
+	propoDetail.AccountableReport = payload.AccountableReport
 
-	if proposal.CreatedBy != userTyped.UserId || proposal.Status != "1" {
+	if proposal.CreatedBy == userTyped.UserId || proposal.Status != "1" {
 		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
 		return
 	}
 
-	if err := pr.propoDetailUC.UpdateData(&payload); err != nil {
+	if err := pr.propoDetailUC.UpdateData(&propoDetail); err != nil {
+		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	updatePayload := model.ProposalProgress{
+		BaseModel: model.BaseModel{
+			ID: payload.ProposalProgressID,
+		},
+		Status: "1",
+	}
+
+	if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
+		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	updateProposal := model.Proposal{
+		BaseModel:       model.BaseModel{ID: payload.ProposalID},
+		CurrentProgress: "Project Completed",
+	}
+
+	if err := pr.useCase.UpdateData(&updateProposal); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}

@@ -18,6 +18,7 @@ type ProposalRepository interface {
 	BeginTransaction() *gorm.DB
 	UpdateMinor(payload *model.Proposal, tx *gorm.DB) error
 	GetTx(id string, tx *gorm.DB) (*model.Proposal, error)
+	UpdateBasic(payload *model.Proposal) error
 }
 type proposalRepository struct {
 	tx *gorm.DB
@@ -130,6 +131,65 @@ func (pr *proposalRepository) Update(payload *model.Proposal) error {
 	}
 
 	return pr.tx.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+}
+
+func (pr *proposalRepository) UpdateBasic(payload *model.Proposal) error {
+	updateFields := make(map[string]interface{})
+
+	// Add fields to be updated based on the payload
+	if payload.OrgName != "" {
+		updateFields["org_name"] = payload.OrgName
+	}
+
+	if payload.OrganizationTypeID != nil {
+		updateFields["organization_type_id"] = payload.OrganizationTypeID
+	}
+
+	if payload.Email != "" {
+		updateFields["email"] = payload.Email
+	}
+
+	if payload.Phone != "" {
+		updateFields["phone"] = payload.Phone
+	}
+
+	if payload.PICName != "" {
+		updateFields["pic_name"] = payload.PICName
+	}
+
+	if payload.City != "" {
+		updateFields["city"] = payload.City
+	}
+
+	if payload.PostalCode != "" {
+		updateFields["postal_code"] = payload.PostalCode
+	}
+
+	if payload.Address != "" {
+		updateFields["address"] = payload.Address
+	}
+
+	if payload.Description != "" {
+		updateFields["description"] = payload.Description
+	}
+
+	if payload.Status != "" {
+		updateFields["status"] = payload.Status
+	}
+
+	if payload.DeletedBy != "" {
+		updateFields["deleted_by"] = payload.DeletedBy
+	}
+
+	if payload.ReviewerID != "" {
+		updateFields["reviewer_id"] = payload.ReviewerID
+	}
+
+	if payload.CurrentProgress != "" {
+		updateFields["current_progress"] = payload.CurrentProgress
+	}
+
+	return pr.db.Model(&model.Proposal{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
 func (pr *proposalRepository) UpdateMinor(payload *model.Proposal, tx *gorm.DB) error {

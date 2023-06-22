@@ -237,7 +237,7 @@ func (pr *proposalUseCase) UpdateData(payload *model.Proposal) error {
 			return fmt.Errorf("proposal with ID %s not found", payload.ID)
 		}
 	}
-	return pr.repo.Update(payload)
+	return pr.repo.UpdateBasic(payload)
 }
 
 func (pr *proposalUseCase) UpdatePropo(payload *model.Proposal, payloadDetail *model.ProposalDetail, org_profile multipart.File, propo_doc multipart.File) error {
