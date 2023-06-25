@@ -76,7 +76,7 @@ func (pr *proposalUseCase) SavePropo(payload *model.Proposal, payloadDetail *mod
 	// 	return err
 	// }
 
-	if payload.Status == "1" && (payload.OrgName == "" || payload.OrganizationTypeID == nil || payload.Email == "" || payload.Phone == "" || payload.PICName == "" || payload.City == "" || payload.PostalCode == "" || payload.Address == "" || payload.Description == "" || payload.ProposalDetail.ProjectName == "" || payload.ProposalDetail.PartnershipTypeID == nil || payload.ProposalDetail.StartDate.IsZero() || payload.ProposalDetail.EndDate.IsZero() || payload.ProposalDetail.Objective == "" || payload.ProposalDetail.Alignment == "") {
+	if payload.Status == "1" && (payload.OrgName == "" || payload.OrganizationTypeID == nil || payload.Email == "" || payload.Phone == "" || payload.PICName == "" || payload.City == "" || payload.PostalCode == "" || payload.Address == "" || payload.Description == "" || payloadDetail.ProjectName == "" || payloadDetail.PartnershipTypeID == nil || payloadDetail.StartDate.IsZero() || payloadDetail.EndDate.IsZero() || payloadDetail.Objective == "" || payloadDetail.Alignment == "") {
 		return fmt.Errorf("form is not completed")
 	}
 
@@ -408,7 +408,7 @@ func (pr *proposalUseCase) UpdatePropo(payload *model.Proposal, payloadDetail *m
 		return fmt.Errorf("proposal with ID %s not found", payload.ID)
 	}
 
-	if payload.Status == "1" && (payload.OrgName == "" || payload.OrganizationTypeID == nil || payload.Email == "" || payload.Phone == "" || payload.PICName == "" || payload.City == "" || payload.PostalCode == "" || payload.Address == "" || payload.Description == "" || payload.ProposalDetail.ProjectName == "" || payload.ProposalDetail.PartnershipTypeID == nil || payload.ProposalDetail.StartDate.IsZero() || payload.ProposalDetail.EndDate.IsZero() || payload.ProposalDetail.Objective == "" || payload.ProposalDetail.Alignment == "") {
+	if payload.Status == "1" && (payload.OrgName == "" || payload.OrganizationTypeID == nil || payload.Email == "" || payload.Phone == "" || payload.PICName == "" || payload.City == "" || payload.PostalCode == "" || payload.Address == "" || payload.Description == "" || payloadDetail.ProjectName == "" || payloadDetail.PartnershipTypeID == nil || payloadDetail.StartDate.IsZero() || payloadDetail.EndDate.IsZero() || payloadDetail.Objective == "" || payloadDetail.Alignment == "") {
 		return fmt.Errorf("form is not completed")
 	}
 
