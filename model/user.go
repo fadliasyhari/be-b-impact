@@ -10,6 +10,8 @@ import (
 
 type User struct {
 	BaseModel
+	Name     string `gorm:"varchar" json:"name"`
+	Phone    string `gorm:"varchar" json:"phone"`
 	Email    string `gorm:"varchar" json:"email"`
 	Username string `gorm:"varchar" json:"username"`
 	Password string `gorm:"varchar" json:"password"`
@@ -20,7 +22,7 @@ type User struct {
 func (u User) Validate() error {
 	return validation.ValidateStruct(&u,
 		validation.Field(&u.Email, validation.Required, is.Email),
-		validation.Field(&u.Username, validation.Required, validation.By(checkNoSpaces)),
+		validation.Field(&u.Username, validation.By(checkNoSpaces)),
 		validation.Field(&u.Password, validation.Required, validation.Length(6, 0)),
 		validation.Field(&u.Role, validation.Required, validation.In("admin", "member")),
 	)

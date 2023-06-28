@@ -30,7 +30,7 @@ func (s *Server) initController() {
 	s.engine.Use(middleware.LogRequestMiddleware(s.log))
 	tokenMdw := middleware.NewTokenValidator(s.tokenService)
 	controller.NewUsersController(s.engine, s.ucManager.UsersUseCase(), tokenMdw)
-	controller.NewAuthController(s.engine, s.ucManager.UsersUseCase(), s.authUseCase)
+	controller.NewAuthController(s.engine, s.ucManager.UsersUseCase(), s.authUseCase, tokenMdw)
 	controller.NewCategoryController(s.engine, s.ucManager.CategoryUseCase(), tokenMdw)
 	controller.NewTagController(s.engine, s.ucManager.TagUseCase(), tokenMdw)
 	controller.NewContentController(s.engine, s.ucManager.ContentUseCase(), tokenMdw)
@@ -74,8 +74,7 @@ func NewServer() *Server {
 	}
 	client := redis.NewClient(opt)
 	tokenService := authenticator.NewTokenService(cfg.TokenConfig, client)
-	authUc := usecase.NewAuthUseCase(tokenService, repo.UsersRepo())
-
+	authUc := usecase.NewAuthUseCase(tokenService, repo.UsersRepo(), client)
 	r.GET("/migrate", func(c *gin.Context) {
 		infra.Conn().DB()
 		err := infra.Migrate(

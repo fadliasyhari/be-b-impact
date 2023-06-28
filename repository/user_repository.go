@@ -102,15 +102,15 @@ func (us *usersRepository) CountData(fieldname string, id string) error {
 	var result *gorm.DB
 
 	if id != "" {
-		result = us.db.Model(&model.User{}).Where("username ilike ? AND id <> ?", fieldname, id).Count(&count)
+		result = us.db.Model(&model.User{}).Where("email ilike ? AND id <> ?", fieldname, id).Count(&count)
 	} else {
-		result = us.db.Model(&model.User{}).Where("username ilike ?", fieldname).Count(&count)
+		result = us.db.Model(&model.User{}).Where("email ilike ?", fieldname).Count(&count)
 	}
 	if result.Error != nil {
 		return result.Error
 	}
 	if count > 0 {
-		return fmt.Errorf("username %s already exist", fieldname)
+		return fmt.Errorf("email %s already exist", fieldname)
 	}
 	return nil
 }
@@ -124,7 +124,7 @@ func (us *usersRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]m
 		// Perform case-insensitive search using ilike
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 	}
-	
+
 	err := query.Select("id, username, email, role, status, created_at, updated_at").Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&users).Error
 	if err != nil {
 		return nil, dto.Paging{}, err

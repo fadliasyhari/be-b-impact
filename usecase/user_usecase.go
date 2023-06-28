@@ -44,7 +44,7 @@ func (us *usersUseCase) SaveData(payload *model.User) error {
 		return err
 	}
 	// cek jika data sudah ada -> count > 0
-	err = us.repo.CountData(payload.Username, payload.ID)
+	err = us.repo.CountData(payload.Email, payload.ID)
 	if err != nil {
 		return err
 	}
