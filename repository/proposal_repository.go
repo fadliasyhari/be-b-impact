@@ -294,12 +294,12 @@ func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) (
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 	}
 
-	err := query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&proposal).Error
+	var totalRows int64
+	err := query.Model(model.Proposal{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
-	var totalRows int64
-	err = query.Model(model.Proposal{}).Count(&totalRows).Error
+	err = query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&proposal).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}

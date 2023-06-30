@@ -105,12 +105,12 @@ func (ca *categoryRepository) Paging(requestQueryParam dto.RequestQueryParams) (
 		// Perform case-insensitive search using ilike
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 	}
-	err := query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&category).Error
+	var totalRows int64
+	err := query.Model(model.Category{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
-	var totalRows int64
-	err = query.Model(model.Category{}).Count(&totalRows).Error
+	err = query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&category).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}

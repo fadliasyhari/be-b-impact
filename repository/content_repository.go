@@ -133,6 +133,7 @@ func (co *contentRepository) Paging(requestQueryParam dto.RequestQueryParams) ([
 	var content []model.Content
 
 	query := co.db.Preload("Image").Preload("Tag").Preload("Category")
+	fmt.Println(query)
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
 		if key == "category" {
@@ -142,15 +143,16 @@ func (co *contentRepository) Paging(requestQueryParam dto.RequestQueryParams) ([
 			query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 		}
 	}
-	err := query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&content).Error
-	if err != nil {
-		return nil, dto.Paging{}, err
-	}
 	var totalRows int64
-	err = query.Model(model.Content{}).Count(&totalRows).Error
+	err := query.Model(model.Content{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
+	err = query.Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&content).Error
+	if err != nil {
+		return nil, dto.Paging{}, err
+	}
+
 	return content, common.Paginate(paginationQuery.Page, paginationQuery.Take, int(totalRows)), nil
 }
 
