@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"be-b-impact.com/csr/utils/authenticator"
@@ -37,6 +38,8 @@ func (a *authTokenMiddlerware) RequireToken() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
+
+			fmt.Println(accessDetail.AccessUUID)
 
 			err = a.acctToken.FetchAccessToken(accessDetail)
 			if err != nil {

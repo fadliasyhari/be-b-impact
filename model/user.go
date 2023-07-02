@@ -10,13 +10,14 @@ import (
 
 type User struct {
 	BaseModel
-	Name     string `gorm:"varchar" json:"name"`
-	Phone    string `gorm:"varchar" json:"phone"`
-	Email    string `gorm:"varchar" json:"email"`
-	Username string `gorm:"varchar" json:"username"`
-	Password string `gorm:"varchar" json:"password"`
-	Role     string `gorm:"varchar" json:"role"`
-	Status   string `json:"status"`
+	Name       string     `gorm:"varchar" json:"name"`
+	Phone      string     `gorm:"varchar" json:"phone"`
+	Email      string     `gorm:"varchar" json:"email"`
+	Username   string     `gorm:"varchar" json:"username"`
+	Password   string     `gorm:"varchar" json:"password"`
+	Role       string     `gorm:"varchar" json:"role"`
+	UserDetail UserDetail `json:"user_detail,omitempty"`
+	Status     string     `json:"status"`
 }
 
 func (u User) Validate() error {

@@ -17,8 +17,11 @@ type UsersRepository interface {
 	BaseRepositoryCount[model.User]
 	BaseRepositoryPaging[model.User]
 	GetByUsernamePassword(username string, password string) (*model.User, error)
+	GetByEmailPassword(email string, password string) (*model.User, error)
+	BeginTransaction() *gorm.DB
 }
 type usersRepository struct {
+	tx *gorm.DB
 	db *gorm.DB
 }
 
@@ -48,12 +51,29 @@ func (us *usersRepository) Save(payload *model.User) error {
 	return us.db.Save(payload).Error
 }
 
+func (us *usersRepository) BeginTransaction() *gorm.DB {
+	us.tx = us.db.Begin()
+	return us.tx
+}
+
 func (us *usersRepository) Update(payload *model.User) error {
 	updateFields := make(map[string]interface{})
 
 	// Add fields to be updated based on the payload
 	if payload.Email != "" {
 		updateFields["email"] = payload.Email
+	}
+
+	if payload.Username != "" {
+		updateFields["username"] = payload.Username
+	}
+
+	if payload.Name != "" {
+		updateFields["name"] = payload.Name
+	}
+
+	if payload.Phone != "" {
+		updateFields["phone"] = payload.Phone
 	}
 
 	if payload.Username != "" {
@@ -149,8 +169,35 @@ func (us *usersRepository) GetByUsername(username string) (*model.User, error) {
 	return &userCredential, nil
 }
 
+func (us *usersRepository) GetByEmail(email string) (*model.User, error) {
+	var userCredential model.User
+	result := us.db.Where("email = ?", email).First(&userCredential)
+	if err := result.Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("user with email '%s' not found", email)
+		}
+		return nil, fmt.Errorf("failed to get user with email '%s': %v", email, err)
+	}
+	return &userCredential, nil
+}
+
 func (us *usersRepository) GetByUsernamePassword(username string, password string) (*model.User, error) {
 	user, err := us.GetByUsername(username)
+	if err != nil {
+		return &model.User{}, err
+	}
+
+	pwdCheck := utils.CheckPasswordHash(password, user.Password)
+	if !pwdCheck {
+		return &model.User{}, fmt.Errorf("password don't match")
+	}
+
+	user.Password = ""
+	return user, nil
+}
+
+func (us *usersRepository) GetByEmailPassword(email string, password string) (*model.User, error) {
+	user, err := us.GetByEmail(email)
 	if err != nil {
 		return &model.User{}, err
 	}

@@ -50,8 +50,8 @@ func (us *UsersController) listHandler(c *gin.Context) {
 		us.NewFailedResponse(c, http.StatusForbidden, "access denied")
 		return
 	}
-	filter := make(map[string]interface{})
 
+	filter := make(map[string]interface{})
 	// Iterate over the query parameters
 	for key, values := range c.Request.URL.Query() {
 		// Skip if the key is empty or has multiple values
@@ -136,20 +136,41 @@ func (us *UsersController) searchHandler(c *gin.Context) {
 }
 
 func (us *UsersController) updateHandler(c *gin.Context) {
-	var payload model.User
-	if err := us.ParseRequestBody(c, &payload); err != nil {
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
 		us.NewFailedResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
+	id := c.Request.FormValue("id")
+	name := c.Request.FormValue("name")
+	phone := c.Request.FormValue("phone")
+	username := c.Request.FormValue("username")
+	password := c.Request.FormValue("password")
+	status := c.Request.FormValue("status")
+	image, _, err := c.Request.FormFile("image")
+	if err != nil {
+		us.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
+	}
+
 	// if it's not super admin, user only can update their user detail
 	userTyped := utils.AccessInsideToken(us.BaseApi, c)
-	if payload.ID != userTyped.UserId && userTyped.Role != "super" {
+	if id != userTyped.UserId && userTyped.Role != "super" {
 		us.NewFailedResponse(c, http.StatusForbidden, "access denied")
 		return
 	}
 
-	if err := us.useCase.UpdateData(&payload); err != nil {
+	payload := model.User{
+		BaseModel: model.BaseModel{
+			ID: id,
+		},
+		Name:     name,
+		Phone:    phone,
+		Username: username,
+		Password: password,
+		Status:   status,
+	}
+
+	if err := us.useCase.UpdateUser(&payload, image); err != nil {
 		us.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}

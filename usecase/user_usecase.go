@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"mime/multipart"
 
 	"be-b-impact.com/csr/model"
 	"be-b-impact.com/csr/model/dto"
@@ -12,10 +13,17 @@ import (
 type UsersUseCase interface {
 	BaseUseCase[model.User]
 	BaseUseCasePaging[model.User]
+	UpdateUser(payload *model.User, image multipart.File) error
 }
 
 type usersUseCase struct {
-	repo repository.UsersRepository
+	repo         repository.UsersRepository
+	userDetailUC UserDetailUseCase
+}
+
+// UpdateData implements UsersUseCase.
+func (*usersUseCase) UpdateData(payload *model.User) error {
+	panic("unimplemented")
 }
 
 func (us *usersUseCase) DeleteData(id string) error {
@@ -66,15 +74,15 @@ func (us *usersUseCase) SaveData(payload *model.User) error {
 	return us.repo.Save(payload)
 }
 
-func (us *usersUseCase) UpdateData(payload *model.User) error {
+func (us *usersUseCase) UpdateUser(payload *model.User, image multipart.File) error {
 	// err := payload.Vaildate()
 	// if err != nil {
 	// 	return err
 	// }
 	// cek jika data sudah ada -> count > 0
 
-	if payload.Username != "" {
-		err := us.repo.CountData(payload.Username, payload.ID)
+	if payload.Email != "" {
+		err := us.repo.CountData(payload.Email, payload.ID)
 		if err != nil {
 			return err
 		}
@@ -94,7 +102,48 @@ func (us *usersUseCase) UpdateData(payload *model.User) error {
 			return fmt.Errorf("users with ID %s not found", payload.ID)
 		}
 	}
-	return us.repo.Update(payload)
+
+	tx := us.repo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := us.repo.Update(payload); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if image != nil {
+		if err := us.userDetailUC.DeleteDataTrx(payload.ID, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		imageURL, err := us.userDetailUC.FirebaseUpload(image)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		imagePayload := model.UserDetail{
+			UserID:   payload.ID,
+			ImageURL: imageURL,
+		}
+
+		if err := us.userDetailUC.SaveUserDetail(&imagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func (us *usersUseCase) SearchBy(by map[string]interface{}) ([]model.User, error) {

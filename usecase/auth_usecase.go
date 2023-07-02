@@ -13,7 +13,7 @@ import (
 )
 
 type AuthUseCase interface {
-	Login(username string, password string) (currentUser *model.User, token string, err error)
+	Login(email string, password string) (currentUser *model.User, token string, err error)
 	Logout(token string) error
 	TokenRegister(user *model.User) (token string, err error)
 	StoreOTP(ctx context.Context, email, otp string) error
@@ -64,14 +64,14 @@ func (a *authUseCase) Logout(token string) error {
 	return nil
 }
 
-func (a *authUseCase) Login(username string, password string) (currentUser *model.User, token string, err error) {
-	user, err := a.repo.GetByUsernamePassword(username, password)
+func (a *authUseCase) Login(email string, password string) (currentUser *model.User, token string, err error) {
+	user, err := a.repo.GetByEmailPassword(email, password)
 	if err != nil {
-		return nil, "", fmt.Errorf("user with username %s not found", username)
+		return nil, "", fmt.Errorf("user with email %s not found", email)
 	}
 
 	tokenDetail, _ := a.tokenService.CreateAccessToken(user)
-	err = a.tokenService.StoreAccessToken(user.Username, tokenDetail)
+	err = a.tokenService.StoreAccessToken(user.Email, tokenDetail)
 	if err != nil {
 		return nil, "", err
 	}
@@ -80,7 +80,7 @@ func (a *authUseCase) Login(username string, password string) (currentUser *mode
 
 func (a *authUseCase) TokenRegister(user *model.User) (token string, err error) {
 	tokenDetail, _ := a.tokenService.CreateAccessToken(user)
-	err = a.tokenService.StoreAccessToken(user.Username, tokenDetail)
+	err = a.tokenService.StoreAccessToken(user.Email, tokenDetail)
 	if err != nil {
 		return "", err
 	}

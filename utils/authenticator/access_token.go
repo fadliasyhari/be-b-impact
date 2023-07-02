@@ -40,13 +40,13 @@ func (t *accessToken) DeleteAccessToken(accessUUID string) error {
 
 // untuk menyimpan data ke dalam redis dan set time expired
 // StoreAccessToken implements AccessToken
-func (t *accessToken) StoreAccessToken(username string, tokenDetail TokenDetail) error {
+func (t *accessToken) StoreAccessToken(email string, tokenDetail TokenDetail) error {
 	at := time.Unix(tokenDetail.AtExpired, 0)
 	// membuat context operasi redis yang baru
 	err := t.client.Set(
 		context.Background(),
 		tokenDetail.AccessUUID,
-		username,
+		email,
 		time.Until(at),
 	).Err()
 	if err != nil {
@@ -58,7 +58,7 @@ func (t *accessToken) StoreAccessToken(username string, tokenDetail TokenDetail)
 // cek uuid dalam redis dan get data
 // FetchAccessToken implements AccessToken
 func (t *accessToken) FetchAccessToken(accessDetail AccessDetail) error {
-	username, err := t.client.Get(
+	email, err := t.client.Get(
 		context.Background(),
 		accessDetail.AccessUUID,
 	).Result()
@@ -66,7 +66,7 @@ func (t *accessToken) FetchAccessToken(accessDetail AccessDetail) error {
 		return err
 	}
 
-	if username == "" {
+	if email == "" {
 		return errors.New("invalid token")
 	}
 
@@ -128,6 +128,8 @@ func (t *accessToken) VerifyAccessToken(tokenString string) (AccessDetail, error
 		return AccessDetail{}, err
 	}
 	username := claims["Username"].(string)
+	name := claims["Name"].(string)
+	email := claims["Email"].(string)
 	uuid := claims["AccessUUID"].(string)
 	role := claims["Role"].(string)
 	status := claims["Status"].(string)
@@ -135,6 +137,8 @@ func (t *accessToken) VerifyAccessToken(tokenString string) (AccessDetail, error
 	return AccessDetail{
 		AccessUUID: uuid,
 		UserId:     userId,
+		Name:       name,
+		Email:      email,
 		Username:   username,
 		Role:       role,
 		Status:     status,

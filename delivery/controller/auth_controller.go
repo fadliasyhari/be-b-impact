@@ -172,7 +172,7 @@ func (au *AuthController) login(c *gin.Context) {
 		return
 	}
 
-	currentUser, token, err := au.authUC.Login(payload.Username, payload.Password)
+	currentUser, token, err := au.authUC.Login(payload.Email, payload.Password)
 	if err != nil {
 		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -180,6 +180,8 @@ func (au *AuthController) login(c *gin.Context) {
 
 	data := map[string]interface{}{
 		"user_id":  currentUser.ID,
+		"name":     currentUser.Name,
+		"email":    currentUser.Email,
 		"username": currentUser.Username,
 		"role":     currentUser.Role,
 		"token":    token,
