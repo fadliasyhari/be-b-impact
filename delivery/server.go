@@ -36,6 +36,7 @@ func (s *Server) initController() {
 	controller.NewContentController(s.engine, s.ucManager.ContentUseCase(), tokenMdw)
 	controller.NewProposalController(s.engine, s.ucManager.ProposalUseCase(), s.ucManager.ProposalDetailUseCase(), s.ucManager.FileUseCase(), s.ucManager.ProgressUseCase(), s.ucManager.ProposalProgressUseCase(), s.ucManager.UsersUseCase(), tokenMdw)
 	controller.NewProgressController(s.engine, s.ucManager.ProgressUseCase(), tokenMdw)
+	controller.NewEventController(s.engine, s.ucManager.EventUseCase(), s.ucManager.EventParticipantUseCase(), tokenMdw)
 }
 
 func (s *Server) Run() {
@@ -89,6 +90,9 @@ func NewServer() *Server {
 			&model.Proposal{},
 			&model.ProposalDetail{},
 			&model.File{},
+			&model.EventImage{},
+			&model.Event{},
+			&model.EventParticipant{},
 			&model.Progress{},
 			&model.ProposalProgress{},
 		)

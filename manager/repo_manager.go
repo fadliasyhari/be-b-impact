@@ -18,11 +18,29 @@ type RepositoryManager interface {
 	FileRepo() repository.FileRepository
 	ProgressRepo() repository.ProgressRepository
 	ProposalProgressRepo() repository.ProposalProgressRepository
+	EventRepo() repository.EventRepository
+	EventParticipantRepo() repository.EventParticipantRepository
+	EventImageRepo() repository.EventImageRepository
 }
 
 type repositoryManager struct {
 	infra       InfraManager
 	firebaseApp *firebase.App
+}
+
+// EventImageRepo implements RepositoryManager.
+func (r *repositoryManager) EventImageRepo() repository.EventImageRepository {
+	return repository.NewEventImageRepository(r.infra.Conn(), r.firebaseApp)
+}
+
+// EventParticipantRepo implements RepositoryManager.
+func (r *repositoryManager) EventParticipantRepo() repository.EventParticipantRepository {
+	return repository.NewEventParticipantRepository(r.infra.Conn())
+}
+
+// EventRepo implements RepositoryManager.
+func (r *repositoryManager) EventRepo() repository.EventRepository {
+	return repository.NewEventRepository(r.infra.Conn())
 }
 
 // ProgressRepo implements RepositoryManager.

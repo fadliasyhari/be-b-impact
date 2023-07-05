@@ -133,7 +133,6 @@ func (co *contentRepository) Paging(requestQueryParam dto.RequestQueryParams) ([
 	var content []model.Content
 
 	query := co.db.Preload("Image").Preload("Tag").Preload("Category")
-	fmt.Println(query)
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
 		if key == "category" {

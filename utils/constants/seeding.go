@@ -2,12 +2,21 @@ package constants
 
 import "be-b-impact.com/csr/model"
 
-var UserSeed = &model.User{
-	Email:    "superadmin@mail.com",
-	Username: "superadmin",
-	Password: "$2a$10$VQxYnfvUoCx7sGL342w54ex.Z4GFNZO6S/.IJToc22E59hk55OysC",
-	Role:     "super",
-	Status:   "1",
+var UserSeed = []model.User{
+	{
+		Email:    "superadmin@mail.com",
+		Username: "superadmin",
+		Password: "$2a$10$VQxYnfvUoCx7sGL342w54ex.Z4GFNZO6S/.IJToc22E59hk55OysC",
+		Role:     "super",
+		Status:   "1",
+	},
+	{
+		Email:    "admin@mail.com",
+		Username: "admin1",
+		Password: "$2a$10$VQxYnfvUoCx7sGL342w54ex.Z4GFNZO6S/.IJToc22E59hk55OysC",
+		Role:     "admin",
+		Status:   "1",
+	},
 }
 
 var TagSeed = []model.Tag{
@@ -114,6 +123,55 @@ var CategorySeed = []model.Category{
 		Parent:    "0",
 		UseFor:    "organization",
 		Name:      "Others",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Competition",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Exhibition",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Social Actions",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Sport",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Culture",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Seminar",
+		Status:    "1",
+		CreatedBy: "super",
+	},
+	{
+		Parent:    "0",
+		UseFor:    "event",
+		Name:      "Campaign",
 		Status:    "1",
 		CreatedBy: "super",
 	},

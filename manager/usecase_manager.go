@@ -15,10 +15,28 @@ type UseCaseManager interface {
 	FileUseCase() usecase.FileUseCase
 	ProgressUseCase() usecase.ProgressUseCase
 	ProposalProgressUseCase() usecase.ProposalProgressUseCase
+	EventUseCase() usecase.EventUseCase
+	EventParticipantUseCase() usecase.EventParticipantUseCase
+	EvenImageUseCase() usecase.EventImageUseCase
 }
 
 type useCaseManager struct {
 	repoManger RepositoryManager
+}
+
+// EvenImageUseCase implements UseCaseManager.
+func (u *useCaseManager) EvenImageUseCase() usecase.EventImageUseCase {
+	return usecase.NewEventImageUseCase(u.repoManger.EventImageRepo())
+}
+
+// EventParticipantUseCase implements UseCaseManager.
+func (u *useCaseManager) EventParticipantUseCase() usecase.EventParticipantUseCase {
+	return usecase.NewEventParticipantUseCase(u.repoManger.EventParticipantRepo())
+}
+
+// EventUseCase implements UseCaseManager.
+func (u *useCaseManager) EventUseCase() usecase.EventUseCase {
+	return usecase.NewEventUseCase(u.repoManger.EventRepo(), u.EventParticipantUseCase(), u.EvenImageUseCase())
 }
 
 // ProgressUseCase implements UseCaseManager.
