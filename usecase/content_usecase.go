@@ -53,6 +53,10 @@ func (co *contentUseCase) SaveContent(payload *model.Content, tags []string, fil
 	// 	return err
 	// }
 
+	if payload.Status == "1" && (payload.Title == "" || payload.Body == "" || payload.Author == "" || payload.Excerpt == "" || payload.CategoryID == nil) {
+		return fmt.Errorf("form is not completed")
+	}
+
 	tx := co.repo.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
@@ -65,31 +69,35 @@ func (co *contentUseCase) SaveContent(payload *model.Content, tags []string, fil
 		return err
 	}
 
-	for _, v := range tags {
-		tcPayload := model.TagsContent{
-			TagID:     v,
-			ContentID: payload.ID,
+	if len(tags) > 0 {
+		for _, v := range tags {
+			tcPayload := model.TagsContent{
+				TagID:     v,
+				ContentID: payload.ID,
+			}
+			if err := co.tagsContentUC.SaveTagsContent(&tcPayload, tx); err != nil {
+				tx.Rollback()
+				return err
+			}
 		}
-		if err := co.tagsContentUC.SaveTagsContent(&tcPayload, tx); err != nil {
+	}
+
+	if file != nil {
+		imageURL, err := co.imageUC.FirebaseUpload(file)
+		if err != nil {
 			tx.Rollback()
 			return err
 		}
-	}
 
-	imageURL, err := co.imageUC.FirebaseUpload(file)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	// Create the image payload
-	imagePayload := model.Image{
-		ImageURL:  imageURL,
-		ContentID: payload.ID,
-	}
-	if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
-		tx.Rollback()
-		return err
+		// Create the image payload
+		imagePayload := model.Image{
+			ImageURL:  imageURL,
+			ContentID: payload.ID,
+		}
+		if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -170,29 +178,35 @@ func (co *contentUseCase) UpdateContent(payload *model.Content, tags []string, f
 		}
 	}
 
-	if len(payload.Image) > 0 {
-		for _, v := range payload.Image {
-			if err := co.imageUC.DeleteDataTrx(v.ID, tx); err != nil {
-				tx.Rollback()
-				return err
+	if file != nil {
+		if len(payload.Image) > 0 {
+			for _, v := range payload.Image {
+				if err := co.imageUC.DeleteDataTrx(v.ID, tx); err != nil {
+					tx.Rollback()
+					return err
+				}
 			}
+		}
+
+		imageURL, err := co.imageUC.FirebaseUpload(file)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		// Create the image payload
+		imagePayload := model.Image{
+			ImageURL:  imageURL,
+			ContentID: payload.ID,
+		}
+		if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
 
-	imageURL, err := co.imageUC.FirebaseUpload(file)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	// Create the image payload
-	imagePayload := model.Image{
-		ImageURL:  imageURL,
-		ContentID: payload.ID,
-	}
-	if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
-		tx.Rollback()
-		return err
+	if payload.Status == "1" && (payload.Title == "" || payload.Body == "" || payload.Author == "" || payload.Excerpt == "" || payload.CategoryID == nil) {
+		return fmt.Errorf("form is not completed")
 	}
 
 	if err := tx.Commit().Error; err != nil {

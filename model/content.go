@@ -10,7 +10,7 @@ type Content struct {
 	Excerpt     string         `gorm:"text" json:"excerpt"`
 	Status      string         `gorm:"varchar" json:"status"`
 	Category    Category       `json:"category" gorm:"foreignKey:CategoryID"`
-	CategoryID  string         `json:"category_id"`
+	CategoryID  *string        `json:"category_id"`
 	CreatedBy   string         `json:"created_by"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 	DeletedBy   string         `json:"deleted_by"`

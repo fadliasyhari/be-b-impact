@@ -34,35 +34,44 @@ func (co *ContentController) createHandler(c *gin.Context) {
 		return
 	}
 
+	var payload model.Content
+
 	// Get the form values
 	title := c.Request.FormValue("title")
+	if title != "" {
+		payload.Title = title
+	}
 	body := c.Request.FormValue("body")
+	if body != "" {
+		payload.Body = body
+	}
 	status := c.Request.FormValue("status")
+	if status != "" {
+		payload.Status = status
+	}
 	author := c.Request.FormValue("author")
+	if author != "" {
+		payload.Author = author
+	}
 	excerpt := c.Request.FormValue("excerpt")
+	if excerpt != "" {
+		payload.Excerpt = excerpt
+	}
 	categoryID := c.Request.FormValue("category_id")
+	if categoryID != "" {
+		payload.CategoryID = &categoryID
+	}
 	tagsString := c.Request.FormValue("tags")
-	file, _, err := c.Request.FormFile("images")
-	if err != nil {
-		co.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
-	}
-
-	// Create the content payload
-	payload := model.Content{
-		Title:      title,
-		Body:       body,
-		Status:     status,
-		Author:     author,
-		Excerpt:    excerpt,
-		CategoryID: categoryID,
-		CreatedBy:  userTyped.UserId,
-	}
-
 	var tags []string
-	if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
-		co.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
-		return
+	if tagsString != "" {
+		if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
+			co.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
+			return
+		}
 	}
+	file, _, _ := c.Request.FormFile("images")
+
+	payload.CreatedBy = userTyped.UserId
 
 	if err := co.useCase.SaveContent(&payload, tags, file); err != nil {
 		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
@@ -189,7 +198,9 @@ func (co *ContentController) updateHandler(c *gin.Context) {
 	existingContent.Status = status
 	existingContent.Author = author
 	existingContent.Excerpt = excerpt
-	existingContent.CategoryID = categoryID
+	if categoryID != "" {
+		existingContent.CategoryID = &categoryID
+	}
 
 	tagsString := c.Request.FormValue("tags")
 	var tags []string
@@ -202,10 +213,7 @@ func (co *ContentController) updateHandler(c *gin.Context) {
 		tags = []string{}
 	}
 
-	file, _, err := c.Request.FormFile("images")
-	if err != nil {
-		co.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
-	}
+	file, _, _ := c.Request.FormFile("images")
 
 	if err := co.useCase.UpdateContent(existingContent, tags, file); err != nil {
 		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())

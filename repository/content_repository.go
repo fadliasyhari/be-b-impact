@@ -68,7 +68,7 @@ func (co *contentRepository) Update(payload *model.Content) error {
 		updateFields["status"] = payload.Status
 	}
 
-	if payload.CategoryID != "" {
+	if payload.CategoryID != nil {
 		updateFields["category_id"] = payload.CategoryID
 	}
 
