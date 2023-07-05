@@ -175,4 +175,11 @@ var CategorySeed = []model.Category{
 		Status:    "1",
 		CreatedBy: "super",
 	},
+	{
+		Parent:    "0",
+		UseFor:    "general",
+		Name:      "General",
+		Status:    "1",
+		CreatedBy: "super",
+	},
 }
