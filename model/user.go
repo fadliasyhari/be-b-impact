@@ -24,7 +24,7 @@ func (u User) Validate() error {
 	return validation.ValidateStruct(&u,
 		validation.Field(&u.Email, validation.Required, is.Email),
 		validation.Field(&u.Username, validation.By(checkNoSpaces)),
-		validation.Field(&u.Password, validation.Required, validation.Length(6, 0)),
+		validation.Field(&u.Password, validation.Required, validation.Length(8, 0)),
 		validation.Field(&u.Role, validation.Required, validation.In("admin", "member")),
 	)
 }
