@@ -165,7 +165,7 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 		return
 	}
 
-	// Get the form values
+	// Get the form values ok
 	id := c.Request.FormValue("id")
 	title := c.Request.FormValue("title")
 	description := c.Request.FormValue("description")
