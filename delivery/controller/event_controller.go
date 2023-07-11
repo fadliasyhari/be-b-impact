@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -42,6 +41,7 @@ func (ev *EventController) createHandler(c *gin.Context) {
 	startDate := c.Request.FormValue("start_date")
 	endDate := c.Request.FormValue("end_date")
 	categoryID := c.Request.FormValue("category_id")
+	status := c.Request.FormValue("status")
 	file, _, err := c.Request.FormFile("images")
 	if err != nil {
 		ev.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
@@ -54,6 +54,7 @@ func (ev *EventController) createHandler(c *gin.Context) {
 		StartDate:   startDate,
 		EndDate:     endDate,
 		Location:    location,
+		Status:      status,
 		CategoryID:  categoryID,
 	}
 
@@ -167,11 +168,12 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 	// Get the form values
 	id := c.Request.FormValue("id")
 	title := c.Request.FormValue("title")
-	body := c.Request.FormValue("body")
-	status := c.Request.FormValue("status")
-	author := c.Request.FormValue("author")
-	excerpt := c.Request.FormValue("excerpt")
+	description := c.Request.FormValue("description")
+	location := c.Request.FormValue("location")
+	startDate := c.Request.FormValue("start_date")
+	endDate := c.Request.FormValue("end_date")
 	categoryID := c.Request.FormValue("category_id")
+	status := c.Request.FormValue("status")
 
 	existingEvent, err := ev.useCase.FindById(id)
 	if err != nil {
@@ -180,22 +182,12 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 	}
 
 	existingEvent.Title = title
-	existingEvent.Description = body
+	existingEvent.Description = description
 	existingEvent.Status = status
-	existingEvent.StartDate = author
-	existingEvent.EndDate = excerpt
+	existingEvent.StartDate = startDate
+	existingEvent.EndDate = endDate
+	existingEvent.Location = location
 	existingEvent.CategoryID = categoryID
-
-	tagsString := c.Request.FormValue("tags")
-	var tags []string
-	if tagsString != "" {
-		if err := json.Unmarshal([]byte(tagsString), &tags); err != nil {
-			ev.NewFailedResponse(c, http.StatusBadRequest, "invalid tags format")
-			return
-		}
-	} else {
-		tags = []string{}
-	}
 
 	file, _, err := c.Request.FormFile("images")
 	if err != nil {
