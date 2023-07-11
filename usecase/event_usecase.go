@@ -71,6 +71,10 @@ func (ev *eventUseCase) SaveEvent(payload *model.Event, file multipart.File) err
 	// 	return err
 	// }
 
+	if payload.Status == "1" && (payload.Title == "" || payload.Description == "" || payload.StartDate == "" || payload.EndDate == "" || payload.CategoryID == nil || payload.Location == "") {
+		return fmt.Errorf("form is not completed")
+	}
+
 	tx := ev.repo.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
@@ -83,20 +87,22 @@ func (ev *eventUseCase) SaveEvent(payload *model.Event, file multipart.File) err
 		return err
 	}
 
-	eventImageURL, err := ev.eventImageUC.FirebaseUpload(file)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+	if file != nil {
+		eventImageURL, err := ev.eventImageUC.FirebaseUpload(file)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 
-	// Create the eventImage payload
-	eventImagePayload := model.EventImage{
-		ImageURL: eventImageURL,
-		EventID:  payload.ID,
-	}
-	if err := ev.eventImageUC.SaveEventImage(&eventImagePayload, tx); err != nil {
-		tx.Rollback()
-		return err
+		// Create the eventImage payload
+		eventImagePayload := model.EventImage{
+			ImageURL: eventImageURL,
+			EventID:  payload.ID,
+		}
+		if err := ev.eventImageUC.SaveEventImage(&eventImagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -148,29 +154,36 @@ func (ev *eventUseCase) UpdateEvent(payload *model.Event, file multipart.File) e
 		return err
 	}
 
-	if len(payload.EventImage) > 0 {
-		for _, v := range payload.EventImage {
-			if err := ev.eventImageUC.DeleteDataTrx(v.ID, tx); err != nil {
-				tx.Rollback()
-				return err
+	if file != nil {
+
+		if len(payload.EventImage) > 0 {
+			for _, v := range payload.EventImage {
+				if err := ev.eventImageUC.DeleteDataTrx(v.ID, tx); err != nil {
+					tx.Rollback()
+					return err
+				}
 			}
+		}
+
+		eventImageURL, err := ev.eventImageUC.FirebaseUpload(file)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		// Create the eventImage payload
+		eventImagePayload := model.EventImage{
+			ImageURL: eventImageURL,
+			EventID:  payload.ID,
+		}
+		if err := ev.eventImageUC.SaveEventImage(&eventImagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
 
-	eventImageURL, err := ev.eventImageUC.FirebaseUpload(file)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	// Create the eventImage payload
-	eventImagePayload := model.EventImage{
-		ImageURL: eventImageURL,
-		EventID:  payload.ID,
-	}
-	if err := ev.eventImageUC.SaveEventImage(&eventImagePayload, tx); err != nil {
-		tx.Rollback()
-		return err
+	if payload.Status == "1" && (payload.Title == "" || payload.Description == "" || payload.StartDate == "" || payload.EndDate == "" || payload.CategoryID == nil || payload.Location == "") {
+		return fmt.Errorf("form is not completed")
 	}
 
 	if err := tx.Commit().Error; err != nil {

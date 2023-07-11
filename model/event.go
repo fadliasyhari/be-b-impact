@@ -11,7 +11,7 @@ type Event struct {
 	EndDate          string             `gorm:"text" json:"end_date"`
 	Status           string             `gorm:"varchar" json:"status"`
 	Category         Category           `json:"category" gorm:"foreignKey:CategoryID"`
-	CategoryID       string             `json:"category_id"`
+	CategoryID       *string            `json:"category_id"`
 	CreatedBy        string             `json:"created_by"`
 	DeletedAt        gorm.DeletedAt     `gorm:"index" json:"-"`
 	DeletedBy        string             `json:"deleted_by"`

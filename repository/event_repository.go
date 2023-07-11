@@ -111,7 +111,7 @@ func (ev *eventRepository) Update(payload *model.Event) error {
 		updateFields["status"] = payload.Status
 	}
 
-	if payload.CategoryID != "" {
+	if payload.CategoryID != nil {
 		updateFields["category_id"] = payload.CategoryID
 	}
 

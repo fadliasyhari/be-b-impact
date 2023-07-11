@@ -34,29 +34,40 @@ func (ev *EventController) createHandler(c *gin.Context) {
 		return
 	}
 
+	var payload model.Event
+
 	// Get the form values
 	title := c.Request.FormValue("title")
+	if title != "" {
+		payload.Title = title
+	}
 	description := c.Request.FormValue("description")
+	if description != "" {
+		payload.Description = description
+	}
 	location := c.Request.FormValue("location")
+	if location != "" {
+		payload.Location = location
+	}
 	startDate := c.Request.FormValue("start_date")
+	if startDate != "" {
+		payload.StartDate = startDate
+	}
 	endDate := c.Request.FormValue("end_date")
+	if endDate != "" {
+		payload.EndDate = endDate
+	}
 	categoryID := c.Request.FormValue("category_id")
+	if categoryID != "" {
+		payload.CategoryID = &categoryID
+	}
 	status := c.Request.FormValue("status")
-	file, _, err := c.Request.FormFile("images")
-	if err != nil {
-		ev.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
+	if status != "" {
+		payload.Status = status
 	}
+	file, _, _ := c.Request.FormFile("images")
 
-	// Create the event payload
-	payload := model.Event{
-		Title:       title,
-		Description: description,
-		StartDate:   startDate,
-		EndDate:     endDate,
-		Location:    location,
-		Status:      status,
-		CategoryID:  categoryID,
-	}
+	payload.CreatedBy = userTyped.UserId
 
 	if err := ev.useCase.SaveEvent(&payload, file); err != nil {
 		ev.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
@@ -165,7 +176,7 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 		return
 	}
 
-	// Get the form values ok
+	// Get the form values
 	id := c.Request.FormValue("id")
 	title := c.Request.FormValue("title")
 	description := c.Request.FormValue("description")
@@ -187,12 +198,11 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 	existingEvent.StartDate = startDate
 	existingEvent.EndDate = endDate
 	existingEvent.Location = location
-	existingEvent.CategoryID = categoryID
-
-	file, _, err := c.Request.FormFile("images")
-	if err != nil {
-		ev.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
+	if categoryID != "" {
+		existingEvent.CategoryID = &categoryID
 	}
+
+	file, _, _ := c.Request.FormFile("images")
 
 	if err := ev.useCase.UpdateEvent(existingEvent, file); err != nil {
 		ev.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
