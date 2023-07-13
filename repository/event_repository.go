@@ -194,9 +194,23 @@ func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams) (
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
-	err = query.Select("*, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
-	if err != nil {
-		return nil, dto.Paging{}, err
+	if requestQueryParam.Order == "category" {
+		if requestQueryParam.Sort == "DESC" {
+			query = query.Joins("JOIN categories ON categories.id = events.category_id").
+				Order("categories.name DESC")
+		} else {
+			query = query.Joins("JOIN categories ON categories.id = events.category_id").
+				Order("categories.name ASC")
+		}
+		err = query.Select("*, (?) as total_participant", subQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		if err != nil {
+			return nil, dto.Paging{}, err
+		}
+	} else {
+		err = query.Select("*, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		if err != nil {
+			return nil, dto.Paging{}, err
+		}
 	}
 
 	return event, common.Paginate(paginationQuery.Page, paginationQuery.Take, int(totalRows)), nil

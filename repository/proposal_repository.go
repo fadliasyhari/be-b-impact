@@ -291,7 +291,12 @@ func (pr *proposalRepository) Paging(requestQueryParam dto.RequestQueryParams) (
 
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
-		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
+		if key == "project_name" {
+			query = query.Joins("JOIN proposal_details ON proposal_details.proposal_id = proposals.id").
+				Where("proposal_details.project_name ilike ?", fmt.Sprintf("%%%v%%", value))
+		} else {
+			query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
+		}
 	}
 
 	var totalRows int64
