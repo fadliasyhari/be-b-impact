@@ -147,10 +147,7 @@ func (us *UsersController) updateHandler(c *gin.Context) {
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 	status := c.Request.FormValue("status")
-	image, _, err := c.Request.FormFile("image")
-	if err != nil {
-		us.NewFailedResponse(c, http.StatusBadRequest, "image not valid")
-	}
+	image, _, _ := c.Request.FormFile("image")
 
 	// if it's not super admin, user only can update their user detail
 	userTyped := utils.AccessInsideToken(us.BaseApi, c)
