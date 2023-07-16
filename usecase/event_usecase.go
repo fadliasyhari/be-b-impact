@@ -22,6 +22,7 @@ type eventUseCase struct {
 	repo               repository.EventRepository
 	eventParticipantUC EventParticipantUseCase
 	eventImageUC       EventImageUseCase
+	notificationUC     NotificationUseCase
 }
 
 // Pagination implements EventUseCase.
@@ -100,6 +101,21 @@ func (ev *eventUseCase) SaveEvent(payload *model.Event, file multipart.File) err
 			EventID:  payload.ID,
 		}
 		if err := ev.eventImageUC.SaveEventImage(&eventImagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if payload.Status == "1" {
+		notifPayload := model.Notification{
+			Body:   fmt.Sprintf("New event: <b>%s</b>", payload.Title),
+			UserID: "0",
+			Type:   "event",
+			TypeID: payload.ID,
+		}
+
+		err := ev.notificationUC.SaveNotifDetail(&notifPayload, tx)
+		if err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -186,6 +202,21 @@ func (ev *eventUseCase) UpdateEvent(payload *model.Event, file multipart.File) e
 		return fmt.Errorf("form is not completed")
 	}
 
+	if payload.Status == "1" {
+		notifPayload := model.Notification{
+			Body:   fmt.Sprintf("New event: <b>%s</b>", payload.Title),
+			UserID: "0",
+			Type:   "event",
+			TypeID: payload.ID,
+		}
+
+		err := ev.notificationUC.SaveNotifDetail(&notifPayload, tx)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return err
@@ -206,13 +237,36 @@ func (ev *eventUseCase) PaginationDto(requestQueryParams dto.RequestQueryParams)
 	if !requestQueryParams.QueryParams.IsSortValid() {
 		return nil, dto.Paging{}, fmt.Errorf("invalid sort by: %s", requestQueryParams.QueryParams.Sort)
 	}
-	return ev.repo.PagingDto(requestQueryParams)
+
+	var eventIdList []string
+	for k, v := range requestQueryParams.Filter {
+		if k == "user_id" {
+			filter := make(map[string]interface{})
+			filter["user_id"] = v
+			eventList, err := ev.eventParticipantUC.SearchBy(filter)
+			if err != nil {
+				return nil, dto.Paging{}, fmt.Errorf("event participants not found")
+			}
+
+			eventIDMap := make(map[string]bool) // Map to track unique event IDs
+			for _, event := range eventList {
+				eventIDMap[event.EventID] = true
+			}
+
+			for eventID := range eventIDMap {
+				eventIdList = append(eventIdList, eventID)
+			}
+		}
+	}
+
+	return ev.repo.PagingDto(requestQueryParams, eventIdList)
 }
 
-func NewEventUseCase(repo repository.EventRepository, eventParticipantUC EventParticipantUseCase, eventImageUC EventImageUseCase) EventUseCase {
+func NewEventUseCase(repo repository.EventRepository, eventParticipantUC EventParticipantUseCase, eventImageUC EventImageUseCase, notificationUC NotificationUseCase) EventUseCase {
 	return &eventUseCase{
 		repo:               repo,
 		eventParticipantUC: eventParticipantUC,
 		eventImageUC:       eventImageUC,
+		notificationUC:     notificationUC,
 	}
 }

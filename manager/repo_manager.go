@@ -21,11 +21,17 @@ type RepositoryManager interface {
 	EventRepo() repository.EventRepository
 	EventParticipantRepo() repository.EventParticipantRepository
 	EventImageRepo() repository.EventImageRepository
+	NotificationRepo() repository.NotificationRepository
 }
 
 type repositoryManager struct {
 	infra       InfraManager
 	firebaseApp *firebase.App
+}
+
+// NotificationRepo implements RepositoryManager.
+func (r *repositoryManager) NotificationRepo() repository.NotificationRepository {
+	return repository.NewNotificationRepository(r.infra.Conn())
 }
 
 // EventImageRepo implements RepositoryManager.

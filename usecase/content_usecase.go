@@ -17,9 +17,10 @@ type ContentUseCase interface {
 }
 
 type contentUseCase struct {
-	repo          repository.ContentRepository
-	tagsContentUC TagsContentUseCase
-	imageUC       ImageUseCase
+	repo           repository.ContentRepository
+	tagsContentUC  TagsContentUseCase
+	imageUC        ImageUseCase
+	notificationUC NotificationUseCase
 }
 
 // SaveData implements ContentUseCase.
@@ -95,6 +96,20 @@ func (co *contentUseCase) SaveContent(payload *model.Content, tags []string, fil
 			ContentID: payload.ID,
 		}
 		if err := co.imageUC.SaveImage(&imagePayload, tx); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if payload.Status == "1" {
+		notifPayload := model.Notification{
+			Body:   fmt.Sprintf("New content: <b>%s</b>", payload.Title),
+			UserID: "0",
+			Type:   "content",
+			TypeID: payload.ID,
+		}
+		err := co.notificationUC.SaveNotifDetail(&notifPayload, tx)
+		if err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -209,6 +224,20 @@ func (co *contentUseCase) UpdateContent(payload *model.Content, tags []string, f
 		return fmt.Errorf("form is not completed")
 	}
 
+	if payload.Status == "1" {
+		notifPayload := model.Notification{
+			Body:   fmt.Sprintf("New content: <b>%s</b>", payload.Title),
+			UserID: "0",
+			Type:   "content",
+			TypeID: payload.ID,
+		}
+		err := co.notificationUC.SaveNotifDetail(&notifPayload, tx)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return err
@@ -241,10 +270,11 @@ func (co *contentUseCase) Pagination(requestQueryParams dto.RequestQueryParams) 
 	return co.repo.Paging(requestQueryParams)
 }
 
-func NewContentUseCase(repo repository.ContentRepository, tagsContentUC TagsContentUseCase, imageUC ImageUseCase) ContentUseCase {
+func NewContentUseCase(repo repository.ContentRepository, tagsContentUC TagsContentUseCase, imageUC ImageUseCase, notificationUC NotificationUseCase) ContentUseCase {
 	return &contentUseCase{
-		repo:          repo,
-		tagsContentUC: tagsContentUC,
-		imageUC:       imageUC,
+		repo:           repo,
+		tagsContentUC:  tagsContentUC,
+		imageUC:        imageUC,
+		notificationUC: notificationUC,
 	}
 }

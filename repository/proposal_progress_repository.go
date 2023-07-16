@@ -15,9 +15,13 @@ type ProposalProgressRepository interface {
 	BaseRepositoryCount[model.ProposalProgress]
 	BaseRepositoryPaging[model.ProposalProgress]
 	SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error
+	UpdateTrx(payload *model.ProposalProgress, tx *gorm.DB) error
+	GetProposalById(id string) (*model.Proposal, error)
+	BeginTransaction() *gorm.DB
 }
 type proposalProgressRepository struct {
 	db *gorm.DB
+	tx *gorm.DB
 }
 
 func (pp *proposalProgressRepository) Delete(id string) error {
@@ -26,11 +30,20 @@ func (pp *proposalProgressRepository) Delete(id string) error {
 
 func (pp *proposalProgressRepository) Get(id string) (*model.ProposalProgress, error) {
 	var proposalProgress model.ProposalProgress
-	result := pp.db.First(&proposalProgress, "id=?", id).Error
+	result := pp.db.Preload("Proposal").Preload("Proposal.ProposalDetail").First(&proposalProgress, "id=?", id).Error
 	if result != nil {
 		return nil, result
 	}
 	return &proposalProgress, nil
+}
+
+func (pp *proposalProgressRepository) GetProposalById(id string) (*model.Proposal, error) {
+	var proposal model.Proposal
+	result := pp.db.Preload("ProposalDetail").Preload("ProposalDetail.PartnershipType").Preload("File").Preload("OrganizatonType").Preload("ProposalProgress").Preload("ProposalProgress.Progress").First(&proposal, "id=?", id).Error
+	if result != nil {
+		return nil, result
+	}
+	return &proposal, nil
 }
 
 func (pp *proposalProgressRepository) List() ([]model.ProposalProgress, error) {
@@ -40,6 +53,11 @@ func (pp *proposalProgressRepository) List() ([]model.ProposalProgress, error) {
 		return nil, result
 	}
 	return proposalProgress, nil
+}
+
+func (pp *proposalProgressRepository) BeginTransaction() *gorm.DB {
+	pp.tx = pp.db.Begin()
+	return pp.tx
 }
 
 func (pp *proposalProgressRepository) Save(payload *model.ProposalProgress) error {
@@ -78,6 +96,36 @@ func (pp *proposalProgressRepository) Update(payload *model.ProposalProgress) er
 	}
 
 	return pp.db.Model(&model.ProposalProgress{}).Where("id = ?", payload.ID).Updates(updateFields).Error
+}
+
+func (pp *proposalProgressRepository) UpdateTrx(payload *model.ProposalProgress, tx *gorm.DB) error {
+	updateFields := make(map[string]interface{})
+
+	if payload.Note != "" {
+		updateFields["note"] = payload.Note
+	}
+
+	if payload.Status != "" {
+		updateFields["status"] = payload.Status
+	}
+
+	if payload.ReviewLocation != "" {
+		updateFields["review_location"] = payload.ReviewLocation
+	}
+
+	if !payload.ReviewDate.IsZero() {
+		updateFields["review_date"] = payload.ReviewDate
+	}
+
+	if payload.ReviewCP != "" {
+		updateFields["review_cp"] = payload.ReviewCP
+	}
+
+	if payload.ReviewFeedback != "" {
+		updateFields["review_feedback"] = payload.ReviewFeedback
+	}
+
+	return tx.Model(&model.ProposalProgress{}).Where("id = ?", payload.ID).Updates(updateFields).Error
 }
 
 func (pp *proposalProgressRepository) Search(by map[string]interface{}) ([]model.ProposalProgress, error) {

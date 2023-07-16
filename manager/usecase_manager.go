@@ -17,15 +17,21 @@ type UseCaseManager interface {
 	ProposalProgressUseCase() usecase.ProposalProgressUseCase
 	EventUseCase() usecase.EventUseCase
 	EventParticipantUseCase() usecase.EventParticipantUseCase
-	EvenImageUseCase() usecase.EventImageUseCase
+	EventImageUseCase() usecase.EventImageUseCase
+	NotificationUseCase() usecase.NotificationUseCase
 }
 
 type useCaseManager struct {
 	repoManger RepositoryManager
 }
 
-// EvenImageUseCase implements UseCaseManager.
-func (u *useCaseManager) EvenImageUseCase() usecase.EventImageUseCase {
+// NotificationUseCase implements UseCaseManager.
+func (u *useCaseManager) NotificationUseCase() usecase.NotificationUseCase {
+	return usecase.NewNotificationUseCase(u.repoManger.NotificationRepo())
+}
+
+// EventImageUseCase implements UseCaseManager.
+func (u *useCaseManager) EventImageUseCase() usecase.EventImageUseCase {
 	return usecase.NewEventImageUseCase(u.repoManger.EventImageRepo())
 }
 
@@ -36,7 +42,7 @@ func (u *useCaseManager) EventParticipantUseCase() usecase.EventParticipantUseCa
 
 // EventUseCase implements UseCaseManager.
 func (u *useCaseManager) EventUseCase() usecase.EventUseCase {
-	return usecase.NewEventUseCase(u.repoManger.EventRepo(), u.EventParticipantUseCase(), u.EvenImageUseCase())
+	return usecase.NewEventUseCase(u.repoManger.EventRepo(), u.EventParticipantUseCase(), u.EventImageUseCase(), u.NotificationUseCase())
 }
 
 // ProgressUseCase implements UseCaseManager.
@@ -46,7 +52,7 @@ func (u *useCaseManager) ProgressUseCase() usecase.ProgressUseCase {
 
 // ProposalProgressUseCase implements UseCaseManager.
 func (u *useCaseManager) ProposalProgressUseCase() usecase.ProposalProgressUseCase {
-	return usecase.NewProposalProgressUseCase(u.repoManger.ProposalProgressRepo())
+	return usecase.NewProposalProgressUseCase(u.repoManger.ProposalProgressRepo(), u.NotificationUseCase())
 }
 
 // FileUseCase implements UseCaseManager.
@@ -76,7 +82,7 @@ func (u *useCaseManager) ImageUseCase() usecase.ImageUseCase {
 
 // ContentUseCase implements UseCaseManager
 func (u *useCaseManager) ContentUseCase() usecase.ContentUseCase {
-	return usecase.NewContentUseCase(u.repoManger.ContentRepo(), u.TagsContentUseCase(), u.ImageUseCase())
+	return usecase.NewContentUseCase(u.repoManger.ContentRepo(), u.TagsContentUseCase(), u.ImageUseCase(), u.NotificationUseCase())
 }
 
 // TagUseCase implements UseCaseManager

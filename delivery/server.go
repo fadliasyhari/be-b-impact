@@ -37,6 +37,7 @@ func (s *Server) initController() {
 	controller.NewProposalController(s.engine, s.ucManager.ProposalUseCase(), s.ucManager.ProposalDetailUseCase(), s.ucManager.FileUseCase(), s.ucManager.ProgressUseCase(), s.ucManager.ProposalProgressUseCase(), s.ucManager.UsersUseCase(), tokenMdw)
 	controller.NewProgressController(s.engine, s.ucManager.ProgressUseCase(), tokenMdw)
 	controller.NewEventController(s.engine, s.ucManager.EventUseCase(), s.ucManager.EventParticipantUseCase(), tokenMdw)
+	controller.NewNotificationController(s.engine, s.ucManager.NotificationUseCase(), tokenMdw)
 }
 
 func (s *Server) Run() {

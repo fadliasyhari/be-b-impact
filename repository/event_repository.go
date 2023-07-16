@@ -14,7 +14,7 @@ type EventRepository interface {
 	BaseRepository[model.Event]
 	BaseRepositoryCount[model.Event]
 	BaseRepositoryPaging[model.Event]
-	PagingDto(requestQueryParam dto.RequestQueryParams) ([]dto.EventDTO, dto.Paging, error)
+	PagingDto(requestQueryParam dto.RequestQueryParams, eventIdList []string) ([]dto.EventDTO, dto.Paging, error)
 	GetDto(id string) (*dto.EventDTO, error)
 	BeginTransaction() *gorm.DB
 }
@@ -170,7 +170,7 @@ func (ev *eventRepository) CountData(fieldname string, id string) error {
 	return nil
 }
 
-func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams) ([]dto.EventDTO, dto.Paging, error) {
+func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams, eventIdList []string) ([]dto.EventDTO, dto.Paging, error) {
 	paginationQuery, orderQuery := pagingValidate(requestQueryParam)
 
 	var event []dto.EventDTO
@@ -182,6 +182,8 @@ func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams) (
 		if key == "category" {
 			query = query.Joins("JOIN categories ON categories.id = events.category_id").
 				Where("categories.name = ?", value)
+		} else if key == "user_id" {
+			query = query.Where("events.id IN (?)", eventIdList)
 		} else {
 			query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
 		}

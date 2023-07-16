@@ -16,7 +16,8 @@ type ProposalProgressUseCase interface {
 }
 
 type proposalProgressUseCase struct {
-	repo repository.ProposalProgressRepository
+	repo           repository.ProposalProgressRepository
+	notificationUC NotificationUseCase
 }
 
 func (pp *proposalProgressUseCase) DeleteData(id string) error {
@@ -44,7 +45,44 @@ func (pp *proposalProgressUseCase) SaveData(payload *model.ProposalProgress) err
 	// if err != nil {
 	// 	return err
 	// }
-	return pp.repo.Save(payload)
+
+	tx := pp.repo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := pp.repo.SaveTrx(payload, tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	progress, err := pp.repo.GetProposalById(payload.ProposalID)
+	if err != nil {
+		return fmt.Errorf("proposalProgress with ID %s not found", payload.ID)
+	}
+
+	notifPayload := model.Notification{
+		Body:   fmt.Sprintf("There's new update on your proposal <b>%s</b>", progress.ProposalDetail.ProjectName),
+		UserID: progress.CreatedBy,
+		Type:   "proposal",
+		TypeID: progress.ID,
+	}
+
+	err = pp.notificationUC.SaveNotifDetail(&notifPayload, tx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+
 }
 
 func (pp *proposalProgressUseCase) SaveTrx(payload *model.ProposalProgress, tx *gorm.DB) error {
@@ -86,6 +124,9 @@ func (pp *proposalProgressUseCase) Pagination(requestQueryParams dto.RequestQuer
 	return pp.repo.Paging(requestQueryParams)
 }
 
-func NewProposalProgressUseCase(repo repository.ProposalProgressRepository) ProposalProgressUseCase {
-	return &proposalProgressUseCase{repo: repo}
+func NewProposalProgressUseCase(repo repository.ProposalProgressRepository, notificationUC NotificationUseCase) ProposalProgressUseCase {
+	return &proposalProgressUseCase{
+		repo:           repo,
+		notificationUC: notificationUC,
+	}
 }
