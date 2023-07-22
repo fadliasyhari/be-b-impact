@@ -131,7 +131,11 @@ func (au *AuthController) sendOTP(c *gin.Context) {
 		return
 	}
 
-	au.NewSuccessSingleResponse(c, "OTP sent successfully", http.StatusOK)
+	data := map[string]interface{}{
+		"otp": newOTP,
+	}
+
+	au.NewSuccessMultiResponse(c, "OTP sent successfully", data)
 }
 
 func (au *AuthController) verifyOTP(c *gin.Context) {
