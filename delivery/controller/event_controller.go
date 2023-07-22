@@ -128,6 +128,9 @@ func (ev *EventController) listHandler(c *gin.Context) {
 }
 
 func (ev *EventController) getHandler(c *gin.Context) {
+
+	userId := c.Query("user_id")
+
 	id := c.Param("id")
 	event, err := ev.useCase.FindById(id)
 	if err != nil {
@@ -137,7 +140,22 @@ func (ev *EventController) getHandler(c *gin.Context) {
 
 	total_participant, _ := ev.eventParticipantUC.CountParticipant(id)
 
-	res := response.MapEventToSingleResponse(event, total_participant)
+	regisStatus := false
+	if userId != "" {
+		filter := make(map[string]interface{})
+		filter["user_id"] = userId
+		filter["event_id"] = event.ID
+		eventParticipant, err := ev.eventParticipantUC.SearchBy(filter)
+		if err != nil {
+			ev.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if len(eventParticipant) > 0 {
+			regisStatus = true
+		}
+	}
+
+	res := response.MapEventToSingleResponse(event, total_participant, regisStatus)
 
 	ev.NewSuccessSingleResponse(c, "OK", res)
 }

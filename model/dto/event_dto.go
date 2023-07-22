@@ -19,6 +19,7 @@ type EventDTOResponse struct {
 	StartDate        string      `json:"start_date"`
 	EndDate          string      `json:"end_date"`
 	Status           string      `json:"status"`
+	IsJoined         bool        `json:"is_joined"`
 	Category         string      `json:"category"`
 	CategoryDetail   CategoryDTO `json:"category_detail"`
 	ImageURLs        []ImageDTO  `json:"image_urls"`
@@ -29,6 +30,7 @@ type EventDTOResponse struct {
 
 type EventParticipantDto struct {
 	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Phone     string    `json:"phone"`

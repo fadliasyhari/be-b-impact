@@ -31,7 +31,7 @@ func MapEventToResponse(event *dto.EventDTO) dto.EventDTOResponse {
 	return res
 }
 
-func MapEventToSingleResponse(event *model.Event, total int64) dto.EventDTOResponse {
+func MapEventToSingleResponse(event *model.Event, total int64, regisStatus bool) dto.EventDTOResponse {
 	res := dto.EventDTOResponse{
 		ID:               event.ID,
 		Title:            event.Title,
@@ -40,6 +40,7 @@ func MapEventToSingleResponse(event *model.Event, total int64) dto.EventDTORespo
 		StartDate:        event.StartDate,
 		EndDate:          event.EndDate,
 		Status:           event.Status,
+		IsJoined:         regisStatus,
 		TotalParticipant: int(total),
 		Category:         event.Category.Name,
 		CategoryDetail: dto.CategoryDTO{
@@ -60,6 +61,7 @@ func MapEventToSingleResponse(event *model.Event, total int64) dto.EventDTORespo
 func MapEventParticipantToResponse(eventParticipant *model.EventParticipant) dto.EventParticipantDto {
 	res := dto.EventParticipantDto{
 		ID:        eventParticipant.ID,
+		UserID:    eventParticipant.UserID,
 		Name:      eventParticipant.Name,
 		Email:     eventParticipant.Email,
 		Phone:     eventParticipant.Phone,
