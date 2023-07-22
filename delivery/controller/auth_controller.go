@@ -178,12 +178,18 @@ func (au *AuthController) login(c *gin.Context) {
 		return
 	}
 
+	var image string
+	if currentUser.UserDetail != nil {
+		image = currentUser.UserDetail[0].ImageURL
+	}
+
 	data := map[string]interface{}{
 		"user_id":  currentUser.ID,
 		"name":     currentUser.Name,
 		"email":    currentUser.Email,
 		"username": currentUser.Username,
 		"role":     currentUser.Role,
+		"image":    image,
 		"token":    token,
 	}
 

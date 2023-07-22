@@ -150,7 +150,7 @@ func (us *usersRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]m
 		return nil, dto.Paging{}, err
 	}
 	var totalRows int64
-	err = query.Model(model.User{}).Count(&totalRows).Error
+	err = us.db.Model(model.User{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
@@ -177,6 +177,13 @@ func (us *usersRepository) GetByEmail(email string) (*model.User, error) {
 			return nil, fmt.Errorf("user with email '%s' not found", email)
 		}
 		return nil, fmt.Errorf("failed to get user with email '%s': %v", email, err)
+	}
+	if userCredential.Role == "member" {
+		var image []model.UserDetail
+		resImage := us.db.Where("user_id = ?", userCredential.ID).Order("created_at DESC").Find(&image)
+		if resImage.Error == nil && len(image) > 0 {
+			userCredential.UserDetail = image
+		}
 	}
 	return &userCredential, nil
 }

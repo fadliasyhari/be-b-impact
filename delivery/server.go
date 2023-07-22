@@ -81,7 +81,7 @@ func NewServer() *Server {
 		infra.Conn().DB()
 		err := infra.Migrate(
 			&model.User{},
-			&model.Profile{},
+			&model.UserDetail{},
 			&model.Category{},
 			&model.Image{},
 			&model.Content{},

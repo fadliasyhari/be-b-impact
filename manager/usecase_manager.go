@@ -17,12 +17,18 @@ type UseCaseManager interface {
 	ProposalProgressUseCase() usecase.ProposalProgressUseCase
 	EventUseCase() usecase.EventUseCase
 	EventParticipantUseCase() usecase.EventParticipantUseCase
-	EventImageUseCase() usecase.EventImageUseCase
+	EvenImageUseCase() usecase.EventImageUseCase
 	NotificationUseCase() usecase.NotificationUseCase
+	UserDetailUseCase() usecase.UserDetailUseCase
 }
 
 type useCaseManager struct {
 	repoManger RepositoryManager
+}
+
+// UserDetailUseCase implements UseCaseManager.
+func (u *useCaseManager) UserDetailUseCase() usecase.UserDetailUseCase {
+	return usecase.NewUserDetailUseCase(u.repoManger.UserDetailRepo())
 }
 
 // NotificationUseCase implements UseCaseManager.
@@ -30,8 +36,8 @@ func (u *useCaseManager) NotificationUseCase() usecase.NotificationUseCase {
 	return usecase.NewNotificationUseCase(u.repoManger.NotificationRepo())
 }
 
-// EventImageUseCase implements UseCaseManager.
-func (u *useCaseManager) EventImageUseCase() usecase.EventImageUseCase {
+// EvenImageUseCase implements UseCaseManager.
+func (u *useCaseManager) EvenImageUseCase() usecase.EventImageUseCase {
 	return usecase.NewEventImageUseCase(u.repoManger.EventImageRepo())
 }
 
@@ -42,7 +48,7 @@ func (u *useCaseManager) EventParticipantUseCase() usecase.EventParticipantUseCa
 
 // EventUseCase implements UseCaseManager.
 func (u *useCaseManager) EventUseCase() usecase.EventUseCase {
-	return usecase.NewEventUseCase(u.repoManger.EventRepo(), u.EventParticipantUseCase(), u.EventImageUseCase(), u.NotificationUseCase())
+	return usecase.NewEventUseCase(u.repoManger.EventRepo(), u.EventParticipantUseCase(), u.EvenImageUseCase(), u.NotificationUseCase())
 }
 
 // ProgressUseCase implements UseCaseManager.
@@ -96,7 +102,7 @@ func (u *useCaseManager) CategoryUseCase() usecase.CategoryUseCase {
 }
 
 func (u *useCaseManager) UsersUseCase() usecase.UsersUseCase {
-	return usecase.NewUsersUseCase(u.repoManger.UsersRepo())
+	return usecase.NewUsersUseCase(u.repoManger.UsersRepo(), u.UserDetailUseCase())
 }
 
 func NewUseCaseManager(repoManager RepositoryManager) UseCaseManager {

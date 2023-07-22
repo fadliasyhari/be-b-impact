@@ -114,13 +114,7 @@ func (us *usersUseCase) UpdateUser(payload *model.User, image multipart.File) er
 		tx.Rollback()
 		return err
 	}
-
 	if image != nil {
-		if err := us.userDetailUC.DeleteDataTrx(payload.ID, tx); err != nil {
-			tx.Rollback()
-			return err
-		}
-
 		imageURL, err := us.userDetailUC.FirebaseUpload(image)
 		if err != nil {
 			tx.Rollback()
@@ -161,6 +155,9 @@ func (us *usersUseCase) Pagination(requestQueryParams dto.RequestQueryParams) ([
 	return us.repo.Paging(requestQueryParams)
 }
 
-func NewUsersUseCase(repo repository.UsersRepository) UsersUseCase {
-	return &usersUseCase{repo: repo}
+func NewUsersUseCase(repo repository.UsersRepository, userDetailUC UserDetailUseCase) UsersUseCase {
+	return &usersUseCase{
+		repo:         repo,
+		userDetailUC: userDetailUC,
+	}
 }
