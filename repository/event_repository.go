@@ -181,7 +181,7 @@ func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams, e
 		// Perform case-insensitive search using ilike
 		if key == "category" {
 			query = query.Joins("JOIN categories ON categories.id = events.category_id").
-				Where("categories.name = ?", value)
+				Where("categories.name = ?, events.id ASC", value)
 		} else if key == "user_id" {
 			query = query.Where("events.id IN (?)", eventIdList)
 		} else {
@@ -199,17 +199,17 @@ func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams, e
 	if requestQueryParam.Order == "category" {
 		if requestQueryParam.Sort == "DESC" {
 			query = query.Joins("JOIN categories ON categories.id = events.category_id").
-				Order("categories.name DESC")
+				Order("categories.name DESC, events.id ASC")
 		} else {
 			query = query.Joins("JOIN categories ON categories.id = events.category_id").
-				Order("categories.name ASC")
+				Order("categories.name ASC, events.id ASC")
 		}
-		err = query.Select("*, (?) as total_participant", subQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		err = query.Select("*,events.id as id, (?) as total_participant", subQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
 		if err != nil {
 			return nil, dto.Paging{}, err
 		}
 	} else {
-		err = query.Select("*, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		err = query.Select("*,events.id as id, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
 		if err != nil {
 			return nil, dto.Paging{}, err
 		}
