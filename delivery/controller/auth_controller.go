@@ -193,6 +193,7 @@ func (au *AuthController) login(c *gin.Context) {
 		"email":    currentUser.Email,
 		"username": currentUser.Username,
 		"role":     currentUser.Role,
+		"phone":    currentUser.Phone,
 		"image":    image,
 		"token":    token,
 	}
