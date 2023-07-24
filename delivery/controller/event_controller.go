@@ -65,7 +65,14 @@ func (ev *EventController) createHandler(c *gin.Context) {
 	if status != "" {
 		payload.Status = status
 	}
-	file, _, _ := c.Request.FormFile("images")
+	file, header, _ := c.Request.FormFile("images")
+
+	if file != nil {
+		if err := utils.ValidateImage(file, header); err != nil {
+			ev.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	payload.CreatedBy = userTyped.UserId
 
@@ -220,7 +227,14 @@ func (ev *EventController) updateHandler(c *gin.Context) {
 		existingEvent.CategoryID = &categoryID
 	}
 
-	file, _, _ := c.Request.FormFile("images")
+	file, header, _ := c.Request.FormFile("images")
+
+	if file != nil {
+		if err := utils.ValidateImage(file, header); err != nil {
+			ev.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	if err := ev.useCase.UpdateEvent(existingEvent, file); err != nil {
 		ev.NewFailedResponse(c, http.StatusInternalServerError, err.Error())

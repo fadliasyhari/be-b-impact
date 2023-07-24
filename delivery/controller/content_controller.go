@@ -69,7 +69,14 @@ func (co *ContentController) createHandler(c *gin.Context) {
 			return
 		}
 	}
-	file, _, _ := c.Request.FormFile("images")
+	file, header, _ := c.Request.FormFile("images")
+
+	if file != nil {
+		if err := utils.ValidateImage(file, header); err != nil {
+			co.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	payload.CreatedBy = userTyped.UserId
 
@@ -213,7 +220,13 @@ func (co *ContentController) updateHandler(c *gin.Context) {
 		tags = []string{}
 	}
 
-	file, _, _ := c.Request.FormFile("images")
+	file, header, _ := c.Request.FormFile("images")
+	if file != nil {
+		if err := utils.ValidateImage(file, header); err != nil {
+			co.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	if err := co.useCase.UpdateContent(existingContent, tags, file); err != nil {
 		co.NewFailedResponse(c, http.StatusInternalServerError, err.Error())

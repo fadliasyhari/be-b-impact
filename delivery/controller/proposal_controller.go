@@ -130,8 +130,21 @@ func (pr *ProposalController) createHandler(c *gin.Context) {
 		proposalDetail.Alignment = alignment
 	}
 
-	org_profile, _, _ := c.Request.FormFile("org_profile")
-	propo_doc, _, _ := c.Request.FormFile("propo_doc")
+	org_profile, org_header, _ := c.Request.FormFile("org_profile")
+	if org_profile != nil {
+		if err := utils.ValidateFile(org_profile, org_header); err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	propo_doc, doc_header, _ := c.Request.FormFile("propo_doc")
+	if propo_doc != nil {
+		if err := utils.ValidateFile(propo_doc, doc_header); err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	if err := pr.useCase.SavePropo(&proposalPayload, &proposalDetail, org_profile, propo_doc); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
@@ -335,8 +348,21 @@ func (pr *ProposalController) updateHandler(c *gin.Context) {
 		proposalDetailPayload.PartnershipTypeID = &partTypeID
 	}
 
-	org_profile, _, _ := c.Request.FormFile("org_profile")
-	propo_doc, _, _ := c.Request.FormFile("propo_doc")
+	org_profile, org_header, _ := c.Request.FormFile("org_profile")
+	if org_profile != nil {
+		if err := utils.ValidateFile(org_profile, org_header); err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	propo_doc, doc_header, _ := c.Request.FormFile("propo_doc")
+	if propo_doc != nil {
+		if err := utils.ValidateFile(propo_doc, doc_header); err != nil {
+			pr.NewFailedResponse(c, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
 
 	if err := pr.useCase.UpdatePropo(existingProposal, &proposalDetailPayload, org_profile, propo_doc); err != nil {
 		pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
