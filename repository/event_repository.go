@@ -204,12 +204,12 @@ func (ev *eventRepository) PagingDto(requestQueryParam dto.RequestQueryParams, e
 			query = query.Joins("JOIN categories ON categories.id = events.category_id").
 				Order("categories.name ASC, events.id ASC")
 		}
-		err = query.Select("*,events.id as id, (?) as total_participant", subQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		err = query.Select("*,events.id as id, events.status as status, (?) as total_participant", subQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
 		if err != nil {
 			return nil, dto.Paging{}, err
 		}
 	} else {
-		err = query.Select("*,events.id as id, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
+		err = query.Select("*,events.id as id, events.status as status, (?) as total_participant", subQuery).Order(orderQuery).Limit(paginationQuery.Take).Offset(paginationQuery.Skip).Find(&event).Error
 		if err != nil {
 			return nil, dto.Paging{}, err
 		}
