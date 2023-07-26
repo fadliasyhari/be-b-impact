@@ -778,7 +778,7 @@ func (pr *ProposalController) reportHandler(c *gin.Context) {
 	propoDetail.ID = proposal.ProposalDetail.ID
 	propoDetail.AccountableReport = payload.AccountableReport
 
-	if proposal.CreatedBy == userTyped.UserId || proposal.Status != "1" {
+	if proposal.CreatedBy != userTyped.UserId || proposal.Status != "1" {
 		pr.NewFailedResponse(c, http.StatusForbidden, "access denied")
 		return
 	}
