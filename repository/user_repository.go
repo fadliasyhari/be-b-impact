@@ -150,7 +150,7 @@ func (us *usersRepository) Paging(requestQueryParam dto.RequestQueryParams) ([]m
 		return nil, dto.Paging{}, err
 	}
 	var totalRows int64
-	err = us.db.Model(model.User{}).Count(&totalRows).Error
+	err = query.Model(model.User{}).Count(&totalRows).Error
 	if err != nil {
 		return nil, dto.Paging{}, err
 	}
