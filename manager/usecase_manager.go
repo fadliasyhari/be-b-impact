@@ -73,7 +73,7 @@ func (u *useCaseManager) ProposalDetailUseCase() usecase.ProposalDetailUseCase {
 
 // ProposalUseCase implements UseCaseManager.
 func (u *useCaseManager) ProposalUseCase() usecase.ProposalUseCase {
-	return usecase.NewProposalUseCase(u.repoManger.ProposalRepo(), u.ProposalDetailUseCase(), u.FileUseCase(), u.ProgressUseCase(), u.ProposalProgressUseCase(), u.UsersUseCase())
+	return usecase.NewProposalUseCase(u.repoManger.ProposalRepo(), u.ProposalDetailUseCase(), u.FileUseCase(), u.ProgressUseCase(), u.ProposalProgressUseCase(), u.UsersUseCase(), u.NotificationUseCase())
 }
 
 // TagsContentUseCase implements UseCaseManager.

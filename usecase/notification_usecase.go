@@ -14,10 +14,16 @@ type NotificationUseCase interface {
 	BaseUseCasePaging[model.Notification]
 	SaveNotifDetail(payload *model.Notification, tx *gorm.DB) error
 	UpdateNotifDetail(payload *model.Notification, tx *gorm.DB) error
+	DeleteNotif(types string, typeId string) error
 }
 
 type notificationUseCase struct {
 	repo repository.NotificationRepository
+}
+
+// DeleteNotif implements NotificationUseCase.
+func (no *notificationUseCase) DeleteNotif(types string, typeId string) error {
+	return no.repo.DeleteNotif(types, typeId)
 }
 
 func (no *notificationUseCase) DeleteData(id string) error {

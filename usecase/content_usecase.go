@@ -33,6 +33,9 @@ func (co *contentUseCase) DeleteData(id string) error {
 	if err != nil {
 		return fmt.Errorf("content with ID %s not found", id)
 	}
+
+	co.notificationUC.DeleteNotif("content", content.ID)
+
 	return co.repo.Delete(content.ID)
 }
 

@@ -43,6 +43,9 @@ func (ev *eventUseCase) DeleteData(id string) error {
 	if err != nil {
 		return fmt.Errorf("event with ID %s not found", id)
 	}
+
+	ev.notificationUC.DeleteNotif("event", event.ID)
+
 	return ev.repo.Delete(event.ID)
 }
 

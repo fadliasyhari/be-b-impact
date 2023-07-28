@@ -16,9 +16,15 @@ type NotificationRepository interface {
 	BaseRepositoryPaging[model.Notification]
 	SaveTrx(payload *model.Notification, tx *gorm.DB) error
 	UpdateTrx(payload *model.Notification, tx *gorm.DB) error
+	DeleteNotif(types string, typeId string) error
 }
 type notificationRepository struct {
 	db *gorm.DB
+}
+
+// DeleteNotif implements NotificationRepository.
+func (no *notificationRepository) DeleteNotif(types string, typeId string) error {
+	return no.db.Delete(&model.Notification{}, "type=? AND type_id=?", types, typeId).Error
 }
 
 func (no *notificationRepository) Delete(id string) error {

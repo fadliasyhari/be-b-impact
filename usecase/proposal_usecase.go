@@ -27,6 +27,7 @@ type proposalUseCase struct {
 	progressUC      ProgressUseCase
 	propoProgressUC ProposalProgressUseCase
 	userUC          UsersUseCase
+	notificationUC  NotificationUseCase
 }
 
 // SaveData implements ProposalUseCase.
@@ -39,6 +40,9 @@ func (pr *proposalUseCase) DeleteData(id string) error {
 	if err != nil {
 		return fmt.Errorf("proposal with ID %s not found", id)
 	}
+
+	pr.notificationUC.DeleteNotif("proposal", proposal.ID)
+
 	return pr.repo.Delete(proposal.ID)
 }
 
@@ -445,7 +449,7 @@ func (pr *proposalUseCase) Pagination(requestQueryParams dto.RequestQueryParams)
 	return pr.repo.Paging(requestQueryParams)
 }
 
-func NewProposalUseCase(repo repository.ProposalRepository, propoDetailUC ProposalDetailUseCase, fileUC FileUseCase, progressUC ProgressUseCase, propoProgressUC ProposalProgressUseCase, userUC UsersUseCase) ProposalUseCase {
+func NewProposalUseCase(repo repository.ProposalRepository, propoDetailUC ProposalDetailUseCase, fileUC FileUseCase, progressUC ProgressUseCase, propoProgressUC ProposalProgressUseCase, userUC UsersUseCase, notificationUC NotificationUseCase) ProposalUseCase {
 	return &proposalUseCase{
 		repo:            repo,
 		propoDetailUC:   propoDetailUC,
@@ -453,5 +457,6 @@ func NewProposalUseCase(repo repository.ProposalRepository, propoDetailUC Propos
 		progressUC:      progressUC,
 		propoProgressUC: propoProgressUC,
 		userUC:          userUC,
+		notificationUC:  notificationUC,
 	}
 }
