@@ -12,21 +12,22 @@ type EventDTO struct {
 }
 
 type EventDTOResponse struct {
-	ID               string      `json:"id"`
-	Title            string      `json:"title"`
-	Description      string      `json:"description"`
-	Location         string      `json:"location"`
-	StartDate        string      `json:"start_date"`
-	EndDate          string      `json:"end_date"`
-	Status           string      `json:"status"`
-	IsJoined         bool        `json:"is_joined"`
-	ParticipantID    string      `json:"participant_id"`
-	Category         string      `json:"category"`
-	CategoryDetail   CategoryDTO `json:"category_detail"`
-	ImageURLs        []ImageDTO  `json:"image_urls"`
-	CreatedAt        time.Time   `json:"created_at"`
-	UpdatedAt        time.Time   `json:"updated_at"`
-	TotalParticipant int         `json:"total_participant"`
+	ID                string              `json:"id"`
+	Title             string              `json:"title"`
+	Description       string              `json:"description"`
+	Location          string              `json:"location"`
+	StartDate         string              `json:"start_date"`
+	EndDate           string              `json:"end_date"`
+	Status            string              `json:"status"`
+	IsJoined          bool                `json:"is_joined"`
+	ParticipantID     string              `json:"participant_id"`
+	ParticipantDetail EventParticipantDto `json:"participant_detail"`
+	Category          string              `json:"category"`
+	CategoryDetail    CategoryDTO         `json:"category_detail"`
+	ImageURLs         []ImageDTO          `json:"image_urls"`
+	CreatedAt         time.Time           `json:"created_at"`
+	UpdatedAt         time.Time           `json:"updated_at"`
+	TotalParticipant  int                 `json:"total_participant"`
 }
 
 type EventParticipantDto struct {
