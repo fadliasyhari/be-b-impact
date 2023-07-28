@@ -27,7 +27,7 @@ func AccessInsideToken(b api.BaseApi, c *gin.Context) authenticator.AccessDetail
 }
 
 const maxImageSize = 2 << 20 // 2MB in bytes
-const maxFileSize = 5 << 20  // 5MB in bytes
+const maxFileSize = 10 << 20 // 10MB in bytes
 
 func ValidateImage(image multipart.File, header *multipart.FileHeader) error {
 	// Check the image size
@@ -57,7 +57,7 @@ func ValidateImage(image multipart.File, header *multipart.FileHeader) error {
 func ValidateFile(file multipart.File, header *multipart.FileHeader) error {
 	// Check the file size
 	if header.Size > maxFileSize {
-		return errors.New("file size exceeds the maximum allowed size (5MB)")
+		return errors.New("file size exceeds the maximum allowed size (10MB)")
 	}
 
 	// Check the file format
