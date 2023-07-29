@@ -704,7 +704,7 @@ func (pr *ProposalController) uploadFileHandler(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 	proposalId := c.Request.FormValue("proposal_id")
 	label := c.Request.FormValue("label")
-	proposalProgressId := c.Request.FormValue("proposal_progress_id")
+	// proposalProgressId := c.Request.FormValue("proposal_progress_id")
 	if label == "" {
 		label = "accountable_report"
 	}
@@ -729,27 +729,27 @@ func (pr *ProposalController) uploadFileHandler(c *gin.Context) {
 		}
 
 		// auto complete progress
-		updatePayload := model.ProposalProgress{
-			BaseModel: model.BaseModel{
-				ID: proposalProgressId,
-			},
-			Status: "1",
-		}
+		// updatePayload := model.ProposalProgress{
+		// 	BaseModel: model.BaseModel{
+		// 		ID: proposalProgressId,
+		// 	},
+		// 	Status: "1",
+		// }
 
-		if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+		// if err := pr.propoProgressUC.UpdateData(&updatePayload); err != nil {
+		// 	pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		// 	return
+		// }
 
-		updateProposal := model.Proposal{
-			BaseModel:       model.BaseModel{ID: proposalId},
-			CurrentProgress: "Project Completed",
-		}
+		// updateProposal := model.Proposal{
+		// 	BaseModel:       model.BaseModel{ID: proposalId},
+		// 	CurrentProgress: "Project Completed",
+		// }
 
-		if err := pr.useCase.UpdateData(&updateProposal); err != nil {
-			pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+		// if err := pr.useCase.UpdateData(&updateProposal); err != nil {
+		// 	pr.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		// 	return
+		// }
 		pr.NewSuccessSingleResponse(c, "OK", filePayload)
 	}
 }
