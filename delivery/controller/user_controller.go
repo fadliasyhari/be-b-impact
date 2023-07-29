@@ -147,6 +147,7 @@ func (us *UsersController) updateHandler(c *gin.Context) {
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 	status := c.Request.FormValue("status")
+	email := c.Request.FormValue("email")
 	image, header, _ := c.Request.FormFile("image")
 
 	if image != nil {
@@ -172,6 +173,7 @@ func (us *UsersController) updateHandler(c *gin.Context) {
 		Username: username,
 		Password: password,
 		Status:   status,
+		Email:    email,
 	}
 
 	if err := us.useCase.UpdateUser(&payload, image); err != nil {
