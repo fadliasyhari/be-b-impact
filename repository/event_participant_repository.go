@@ -108,8 +108,8 @@ func (ep *eventParticipantRepository) Paging(requestQueryParam dto.RequestQueryP
 	for key, value := range requestQueryParam.Filter {
 		// Perform case-insensitive search using ilike
 		query = query.Where(fmt.Sprintf("%s ilike ?", key), fmt.Sprintf("%%%v%%", value))
-
 	}
+	query = query.Joins("JOIN events ON events.id = event_participants.event_id AND events.deleted_at IS NULL")
 	var totalRows int64
 	err := query.Model(model.EventParticipant{}).Count(&totalRows).Error
 	if err != nil {
