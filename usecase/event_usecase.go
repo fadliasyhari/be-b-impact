@@ -220,6 +220,14 @@ func (ev *eventUseCase) UpdateEvent(payload *model.Event, file multipart.File) e
 		}
 	}
 
+	if payload.Status == "2" {
+		err := ev.notificationUC.DeleteNotif("event", payload.ID)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return err

@@ -7,6 +7,6 @@ type Notification struct {
 	Body      string         `gorm:"varchar" json:"body"`
 	UserID    string         `gorm:"varchar" json:"user_id"`
 	Type      string         `gorm:"varchar" json:"type"`
-	TypeID    string         `gorm:"varchat" json:"type_id"`
+	TypeID    string         `gorm:"varchar" json:"type_id"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }

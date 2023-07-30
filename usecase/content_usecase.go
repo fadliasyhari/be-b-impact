@@ -241,6 +241,14 @@ func (co *contentUseCase) UpdateContent(payload *model.Content, tags []string, f
 		}
 	}
 
+	if payload.Status == "2" {
+		err := co.notificationUC.DeleteNotif("content", payload.ID)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return err
