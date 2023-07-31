@@ -19,6 +19,7 @@ type UsersRepository interface {
 	GetByUsernamePassword(username string, password string) (*model.User, error)
 	GetByEmailPassword(email string, password string) (*model.User, error)
 	BeginTransaction() *gorm.DB
+	GetByEmail(email string) (*model.User, error)
 }
 type usersRepository struct {
 	tx *gorm.DB

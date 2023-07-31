@@ -14,6 +14,7 @@ type UsersUseCase interface {
 	BaseUseCase[model.User]
 	BaseUseCasePaging[model.User]
 	UpdateUser(payload *model.User, image multipart.File) error
+	FindByEmail(email string) (*model.User, error)
 }
 
 type usersUseCase struct {
@@ -42,6 +43,14 @@ func (us *usersUseCase) FindById(id string) (*model.User, error) {
 	users, err := us.repo.Get(id)
 	if err != nil {
 		return nil, fmt.Errorf("users with ID %s not found", id)
+	}
+	return users, nil
+}
+
+func (us *usersUseCase) FindByEmail(email string) (*model.User, error) {
+	users, err := us.repo.GetByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("users with ID %s not found", email)
 	}
 	return users, nil
 }

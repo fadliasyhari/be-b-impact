@@ -226,13 +226,25 @@ func (au *AuthController) forgetPassword(c *gin.Context) {
 		return
 	}
 
+	users, err := au.userUC.FindByEmail(payload.Email)
+	if err != nil {
+		au.NewFailedResponse(c, http.StatusNotFound, err.Error())
+		return
+	}
+
+	token, err := au.authUC.TokenRegister(users)
+	if err != nil {
+		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	// Perform necessary logic for forget password, e.g., generate reset token, store in database, etc.
 
 	// Generate a password reset link
-	resetLink := "https://example.com/reset-password?token=YOUR_RESET_TOKEN"
+	resetLink := fmt.Sprintf("https://client-b-impact.web.app/reset/?%s,%s", users.ID, token)
 
 	// Send password reset email
-	err := utils.SendResetEmail(payload.Email, resetLink)
+	err = utils.SendResetEmail(payload.Email, resetLink)
 	if err != nil {
 		au.NewFailedResponse(c, http.StatusInternalServerError, err.Error())
 		return
