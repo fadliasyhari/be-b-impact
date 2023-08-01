@@ -1,4 +1,4 @@
-package controller
+kopackage controller
 
 import (
 	"context"
@@ -241,7 +241,7 @@ func (au *AuthController) forgetPassword(c *gin.Context) {
 	// Perform necessary logic for forget password, e.g., generate reset token, store in database, etc.
 
 	// Generate a password reset link
-	resetLink := fmt.Sprintf("https://client-b-impact.web.app/reset/?%s,%s", users.ID, token)
+	resetLink := fmt.Sprintf("https://client-b-impact.web.app/reset/%s,%s", users.ID, token)
 
 	// Send password reset email
 	err = utils.SendResetEmail(payload.Email, resetLink)
