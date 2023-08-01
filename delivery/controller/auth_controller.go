@@ -1,4 +1,4 @@
-kopackage controller
+package controller
 
 import (
 	"context"
